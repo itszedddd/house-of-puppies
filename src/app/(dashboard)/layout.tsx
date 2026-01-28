@@ -12,7 +12,7 @@ export default function DashboardLayout({
             <aside className="w-full border-r bg-muted/40 md:w-64">
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                     <Link href="/" className="flex items-center gap-2 font-semibold">
-                        <LayoutDashboard className="h-6 w-6" />
+                        <LayoutDashboard className="h-6 w-6 text-primary" />
                         <span className="">BlackJax Panel</span>
                     </Link>
                 </div>

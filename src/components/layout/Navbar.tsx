@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Scissors, ShoppingBag, User } from "lucide-react";
+import { ShoppingBag, User } from "lucide-react";
 
 export function Navbar() {
     return (
@@ -8,9 +9,18 @@ export function Navbar() {
             <div className="container flex h-16 items-center justify-between">
                 <div className="mr-4 hidden md:flex">
                     <Link href="/" className="mr-6 flex items-center space-x-2">
-                        <Scissors className="h-6 w-6" />
-                        <span className="hidden font-bold sm:inline-block">
-                            BlackJax Grooming
+                        <div className="relative h-8 w-8 overflow-hidden rounded-full">
+                            <Image
+                                src="/logo.jpg"
+                                alt="BlackJax Logo"
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                        <span className="hidden text-lg font-bold sm:inline-block">
+                            <span className="text-black dark:text-black">BLACK</span>
+                            <span className="text-primary">JAX</span>
+                            <span className="ml-1 text-sm font-normal text-muted-foreground">PET HUB</span>
                         </span>
                     </Link>
                     <nav className="flex items-center space-x-6 text-sm font-medium">

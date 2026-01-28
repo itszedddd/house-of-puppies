@@ -1,31 +1,20 @@
-import { Scissors } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
     return (
         <footer className="border-t bg-background">
             <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
-                <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-                    <Scissors className="h-6 w-6" />
+                <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-4 md:px-0">
+                    <div className="relative h-8 w-8 overflow-hidden rounded-full">
+                        <Image
+                            src="/logo.jpg"
+                            alt="BlackJax Logo"
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
                     <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-                        Built by{" "}
-                        <a
-                            href="#"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-medium underline underline-offset-4"
-                        >
-                            Antigravity
-                        </a>
-                        . The source code is available on{" "}
-                        <a
-                            href="#"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-medium underline underline-offset-4"
-                        >
-                            GitHub
-                        </a>
-                        .
+                        Created by Thesis Group 4.
                     </p>
                 </div>
             </div>
