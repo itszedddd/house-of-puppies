@@ -14,7 +14,7 @@ export function Footer() {
                         />
                     </div>
                     <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-                        Created by Thesis Group 4.
+                        &copy; 2026 House of Puppies Veterinary Clinic & Grooming Salon.
                     </p>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/layout/mode-toggle";
 import { ShoppingBag, User } from "lucide-react";
 
 export function Navbar() {
@@ -9,18 +10,16 @@ export function Navbar() {
             <div className="container flex h-16 items-center justify-between">
                 <div className="mr-4 hidden md:flex">
                     <Link href="/" className="mr-6 flex items-center space-x-2">
-                        <div className="relative h-8 w-8 overflow-hidden rounded-full">
-                            <Image
-                                src="/logo.jpg"
-                                alt="BlackJax Logo"
-                                fill
-                                className="object-cover"
+                        <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-primary">
+                            <img
+                                src="/branding.jpg"
+                                alt="House of Puppies Logo"
+                                className="h-full w-full object-cover"
                             />
                         </div>
                         <span className="hidden text-lg font-bold sm:inline-block">
-                            <span className="text-black dark:text-black">BLACK</span>
-                            <span className="text-primary">JAX</span>
-                            <span className="ml-1 text-sm font-normal text-muted-foreground">PET HUB</span>
+                            <span className="text-primary">House of Puppies</span>
+                            <span className="ml-1 text-sm font-normal text-muted-foreground">Vet & Grooming</span>
                         </span>
                     </Link>
                     <nav className="flex items-center space-x-6 text-sm font-medium">
@@ -49,6 +48,7 @@ export function Navbar() {
                         {/* Search or other items could go here */}
                     </div>
                     <nav className="flex items-center space-x-2">
+                        <ModeToggle />
                         <Button variant="ghost" size="icon" asChild>
                             <Link href="/client">
                                 <ShoppingBag className="h-5 w-5" />

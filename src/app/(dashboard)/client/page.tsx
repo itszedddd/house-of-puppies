@@ -4,25 +4,30 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockPets, Pet } from "@/lib/data";
 import { Search, PawPrint } from "lucide-react";
+import { searchPetStatus } from "@/app/actions/pets";
+import { Pet } from "@prisma/client";
 
 export default function ClientPage() {
     const [ticketId, setTicketId] = useState("");
     const [foundPet, setFoundPet] = useState<Pet | null>(null);
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSearch = (e: React.FormEvent) => {
+    const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setFoundPet(null);
+        setIsLoading(true);
 
-        const pet = mockPets.find((p) => p.id.toLowerCase() === ticketId.toLowerCase());
+        const pet = await searchPetStatus(ticketId);
+
         if (pet) {
             setFoundPet(pet);
         } else {
             setError("No pet found with that Ticket ID. Please check and try again.");
         }
+        setIsLoading(false);
     };
 
     return (
@@ -65,12 +70,12 @@ export default function ClientPage() {
                         <div>
                             <p className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Current Status</p>
                             <div className={`text-3xl font-bold mt-1 
-                    ${foundPet.status === 'Ready' ? 'text-green-600' : 'text-primary'}`}>
-                                {foundPet.status}
+                    ${(foundPet as any).records?.[0]?.status === 'completed' ? 'text-green-600' : 'text-primary'}`}>
+                                {(foundPet as any).records?.[0]?.status || 'pending'}
                             </div>
                         </div>
 
-                        {foundPet.status === 'Ready' ? (
+                        {(foundPet as any).records?.[0]?.status === 'completed' ? (
                             <div className="bg-green-100 text-green-800 p-3 rounded-md text-sm font-medium">
                                 Your pet is ready for pickup!
                             </div>

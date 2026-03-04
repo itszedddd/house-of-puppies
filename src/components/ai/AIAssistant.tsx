@@ -41,19 +41,41 @@ export function AIAssistant() {
 
     const generateResponse = (query: string): string => {
         const q = query.toLowerCase();
-        if (q.includes("book") || q.includes("appointment")) {
-            return "I can help with that! Please visit our booking page or call us at (555) 123-4567 to schedule a grooming session.";
+
+        // Veterinary & Medical
+        if (q.includes("vaccin") || q.includes("shot")) {
+            return "We offer core vaccinations like 5-in-1, Rabies, and Kennel Cough. You can check your pet's due dates in the Client View or visit us for a shot!";
         }
-        if (q.includes("hours") || q.includes("open")) {
-            return "We are open Monday to Saturday, 8:00 AM to 6:00 PM. We are closed on Sundays.";
+        if (q.includes("sick") || q.includes("vomit") || q.includes("emergency")) {
+            return "If your pet is showing severe symptoms, please bring them to our clinic immediately! For after-hours emergencies, please contact the nearest 24/7 animal hospital.";
+        }
+        if (q.includes("checkup") || q.includes("consult")) {
+            return "Consultations start at ₱300. Our veterinarians are available Mon-Sat, 9 AM - 5 PM.";
+        }
+        if (q.includes("flea") || q.includes("tick")) {
+            return "We have treatments for fleas and ticks, including Bravecto and NexGard. Check our inventory or ask a vet during your visit.";
+        }
+
+        // Inventory & Products
+        if (q.includes("food") || q.includes("diet")) {
+            return "We stock premium dog and cat food. Please visit our 'Products' section or ask at the counter for specific brands.";
+        }
+        if (q.includes("shampoo") || q.includes("soap")) {
+            return "We use and sell hypoallergenic and medicated shampoos suitable for all breeds.";
+        }
+
+        // Grooming (Existing)
+        if (q.includes("book") || q.includes("appointment")) {
+            return "To book a grooming or vet appointment, please visit our clinic or call (0912) 345-6789. Only registered clients can view status online.";
         }
         if (q.includes("price") || q.includes("cost")) {
-            return "Our prices vary by breed and service. A basic bath starts at $30, while full grooming starts at $60.";
+            return "Grooming starts at ₱500, while Vet Consultations start at ₱300. Prices vary by breed and size.";
         }
-        if (q.includes("status")) {
-            return "You can check your pet's status by clicking 'Client Portal' in the menu and entering your Ticket ID.";
+        if (q.includes("hours") || q.includes("open")) {
+            return "House of Puppies is open Monday to Saturday, 8:00 AM to 6:00 PM.";
         }
-        return "I'm not sure about that, but our team would love to help! Please call us or visit the shop.";
+
+        return "I'm still learning! For specific medical or stock queries, it's best to call us directly or visit the clinic.";
     };
 
     return (
@@ -92,8 +114,8 @@ export function AIAssistant() {
                             >
                                 <div
                                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${m.role === "user"
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-muted text-foreground"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-muted text-foreground"
                                         }`}
                                 >
                                     {m.text}

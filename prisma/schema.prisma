@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  passwordHash  String
+  role          String    @default("admin") // e.g. "admin", "staff"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Client {
+  id            String    @id @default(cuid())
+  name          String
+  phone         String?
+  email         String?
+  address       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  pets          Pet[]
+}
+
+model Pet {
+  id            String    @id @default(cuid())
+  name          String
+  breed         String?
+  species       String?   // "Dog", "Cat", etc.
+  age           Int?
+  notes         String?
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  records       Record[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Record {
+  id            String    @id @default(cuid())
+  petId         String
+  pet           Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
+  serviceType   String    // e.g. "Full Groom", "Bath & Brush"
+  date          DateTime
+  price         Float?
+  status        String    @default("scheduled") // "scheduled", "completed", "cancelled"
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}

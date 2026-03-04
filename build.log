@@ -1,0 +1,22 @@
+
+> blackjax-grooming@0.1.0 build
+> next build
+
+▲ Next.js 16.1.5 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.3s
+  Running TypeScript ...
+Failed to compile.
+
+./src/components/theme-provider.tsx:5:41
+Type error: Cannot find module 'next-themes/dist/types' or its corresponding type declarations.
+
+  3 | import * as React from "react"
+  4 | import { ThemeProvider as NextThemesProvider } from "next-themes"
+> 5 | import { type ThemeProviderProps } from "next-themes/dist/types"
+    |                                         ^
+  6 |
+  7 | export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  8 |     return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+Next.js build worker exited with code: 1 and signal: null
