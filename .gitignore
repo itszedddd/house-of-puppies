@@ -10,6 +10,12 @@
 !.yarn/releases
 !.yarn/versions
 
+# prisma database (local dev only - contains sensitive data)
+prisma/dev.db
+prisma/dev.db-journal
+prisma/*.db
+prisma/*.db-journal
+
 # testing
 /coverage
 
