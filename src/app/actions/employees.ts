@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 
 export async function createEmployee(data: FormData) {
     const name = data.get("name") as string;
@@ -12,11 +13,13 @@ export async function createEmployee(data: FormData) {
     if (!name || !email || !password || !role) return { error: "All fields are required" };
 
     try {
+        const passwordHash = await bcrypt.hash(password, 10);
+
         await prisma.user.create({
             data: {
                 name,
                 email,
-                passwordHash: password, // In a real app, hash this with bcrypt
+                passwordHash,
                 role
             }
         });
