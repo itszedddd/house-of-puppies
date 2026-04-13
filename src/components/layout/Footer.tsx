@@ -5,9 +5,9 @@ export function Footer() {
         <footer className="border-t bg-background">
             <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
                 <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-4 md:px-0">
-                    <div className="relative h-8 w-8 overflow-hidden rounded-full">
+                    <div className="relative h-8 w-8 overflow-hidden rounded-full bg-white">
                         <Image
-                            src="/logo.jpg"
+                            src="/primary-logo-2.png"
                             alt="House of Puppies Logo"
                             fill
                             className="object-cover"

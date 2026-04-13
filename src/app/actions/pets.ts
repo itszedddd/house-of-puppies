@@ -1,23 +1,66 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { Pet } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-export async function searchPetStatus(id: string): Promise<Pet | null> {
+export async function createPet(data: FormData) {
+    const name = data.get("name") as string;
+    const ownerId = data.get("clientId") as string;
+    const breed = (data.get("breed") as string) || null;
+    const species = (data.get("species") as string) || null;
+    const dateOfBirth = data.get("age") as string || null;
+
+    if (!name || !ownerId) {
+        return { error: "Name and Owner are required" };
+    }
+
+    try {
+        // Duplicate check: same pet name under the same owner
+        const existingPet = await prisma.pet.findFirst({
+            where: {
+                name: { equals: name },
+                ownerId: ownerId,
+            }
+        });
+
+        if (existingPet) {
+            return { error: `A pet named "${name}" already exists for this owner. Please use a different name or select the existing pet.` };
+        }
+
+        await prisma.pet.create({
+            data: {
+                name,
+                ownerId,
+                breed,
+                species,
+                dateOfBirth
+            }
+        });
+
+        revalidatePath("/admin/pets");
+        revalidatePath("/admin");
+        revalidatePath("/employee");
+        revalidatePath("/employee/pets");
+        return { success: true };
+    } catch (e) {
+        console.error(e);
+        return { error: "Failed to create pet record" };
+    }
+}
+
+export async function searchPetStatus(id: string) {
     try {
         const pet = await prisma.pet.findUnique({
             where: { id: id },
             include: {
-                client: true,
+                owner: true,
                 records: {
-                    orderBy: { date: 'desc' },
+                    orderBy: { visitDate: 'desc' },
                     take: 1
                 }
             }
         });
 
-        // Search by short-id as fallback
         if (!pet) {
             const petByShortId = await prisma.pet.findFirst({
                 where: {
@@ -26,9 +69,9 @@ export async function searchPetStatus(id: string): Promise<Pet | null> {
                     }
                 },
                 include: {
-                    client: true,
+                    owner: true,
                     records: {
-                        orderBy: { date: 'desc' },
+                        orderBy: { visitDate: 'desc' },
                         take: 1
                     }
                 }
@@ -43,47 +86,11 @@ export async function searchPetStatus(id: string): Promise<Pet | null> {
     }
 }
 
-export async function createPet(data: FormData) {
-    const name = data.get("name") as string;
-    const clientId = data.get("clientId") as string;
-    const breed = (data.get("breed") as string) || null;
-    const species = (data.get("species") as string) || null;
-    const ageString = data.get("age") as string;
-    const age = ageString ? parseInt(ageString, 10) : null;
-    const notes = (data.get("notes") as string) || null;
-
-    if (!name || !clientId) {
-        return { error: "Name and Client Owner are required" };
-    }
-
-    try {
-        await prisma.pet.create({
-            data: {
-                name,
-                clientId,
-                breed,
-                species,
-                age,
-                notes
-            }
-        });
-
-        revalidatePath("/admin/pets");
-        revalidatePath("/admin");
-        return { success: true };
-    } catch (e) {
-        console.error(e);
-        return { error: "Failed to create pet record" };
-    }
-}
-
 export async function updatePet(id: string, data: FormData) {
     const name = data.get("name") as string;
     const breed = (data.get("breed") as string) || null;
     const species = (data.get("species") as string) || null;
-    const ageString = data.get("age") as string;
-    const age = ageString ? parseInt(ageString, 10) : null;
-    const notes = (data.get("notes") as string) || null;
+    const dateOfBirth = data.get("age") as string || null;
     const status = data.get("status") as string;
 
     if (!name) return { error: "Name is required" };
@@ -91,18 +98,17 @@ export async function updatePet(id: string, data: FormData) {
     try {
         await prisma.pet.update({
             where: { id },
-            data: { name, breed, species, age, notes }
+            data: { name, breed, species, dateOfBirth }
         });
 
-        // If a status was supplied via the admin edit form, aggressively update the pet's latest record.
         if (status) {
-            const latestRecord = await prisma.record.findFirst({
+            const latestRecord = await prisma.clinicalRecord.findFirst({
                 where: { petId: id },
-                orderBy: { date: "desc" }
+                orderBy: { visitDate: "desc" }
             });
 
             if (latestRecord) {
-                await prisma.record.update({
+                await prisma.clinicalRecord.update({
                     where: { id: latestRecord.id },
                     data: { status }
                 });
@@ -111,6 +117,7 @@ export async function updatePet(id: string, data: FormData) {
 
         revalidatePath("/admin/pets");
         revalidatePath("/admin");
+        revalidatePath("/employee/pets");
         return { success: true };
     } catch (e) {
         return { error: "Failed to update pet" };
@@ -122,6 +129,7 @@ export async function deletePet(id: string) {
         await prisma.pet.delete({ where: { id } });
         revalidatePath("/admin/pets");
         revalidatePath("/admin");
+        revalidatePath("/employee/pets");
         return { success: true };
     } catch (e) {
         return { error: "Failed to delete pet" };

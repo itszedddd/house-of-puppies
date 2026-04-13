@@ -3,14 +3,45 @@ import { prisma } from "@/lib/prisma";
 import EmployeeForm from "./employee-form";
 import EmployeeActions from "./employee-actions";
 import { Badge } from "@/components/ui/badge";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import SearchSort from "../search-sort";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminEmployeesPage() {
-    const employees = await prisma.staff.findMany({
-        orderBy: { createdAt: "desc" },
-        include: { role: true }
-    });
+export default async function AdminEmployeesPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+    const params = await searchParams;
+    const session = await auth();
+    if (!session?.user || session.user.role !== "owner") {
+        redirect("/login");
+    }
+    const search = typeof params?.search === 'string' ? params.search : undefined;
+    const sortBy = typeof params?.sortBy === 'string' ? params.sortBy : 'createdAt';
+    const sortDir = typeof params?.sortDir === 'string' ? params.sortDir : 'desc';
+
+    const validSortKeys = ['fullName', 'createdAt'] as const;
+    type SortKey = typeof validSortKeys[number];
+    const sortField: SortKey = validSortKeys.includes(sortBy as SortKey) ? (sortBy as SortKey) : 'createdAt';
+
+    let employees: any[] = [];
+    try {
+        employees = await prisma.staff.findMany({
+            where: search ? {
+                OR: [
+                    { fullName: { contains: search } },
+                    { username: { contains: search } }
+                ]
+            } : undefined,
+            orderBy: { [sortField]: sortDir as 'asc' | 'desc' },
+            include: { role: true }
+        });
+    } catch (e) {
+        console.error("[DB] AdminEmployeesPage failed:", e);
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -24,6 +55,14 @@ export default async function AdminEmployeesPage() {
                     <CardTitle>Employee Directory</CardTitle>
                 </CardHeader>
                 <CardContent>
+                    <SearchSort
+                        sortOptions={[
+                            { label: 'Name', value: 'fullName' },
+                            { label: 'Date Added', value: 'createdAt' },
+                        ]}
+                        defaultSort="createdAt"
+                        searchPlaceholder="Search by name or username..."
+                    />
                     <div className="relative w-full overflow-auto">
                         <table className="w-full caption-bottom text-sm text-left">
                             <thead className="[&_tr]:border-b">

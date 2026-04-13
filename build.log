@@ -1,22 +1,48 @@
 
-> blackjax-grooming@0.1.0 build
+> house-of-puppies@0.1.0 build
 > next build
 
-▲ Next.js 16.1.5 (Turbopack)
+Γû▓ Next.js 16.1.5 (Turbopack)
+- Environments: .env
 
+ΓÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
   Creating an optimized production build ...
-✓ Compiled successfully in 3.3s
-  Running TypeScript ...
-Failed to compile.
+Γ£ô Compiled successfully in 8.3s
+  Skipping validation of types
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/10) ...
+  Generating static pages using 7 workers (2/10) 
+  Generating static pages using 7 workers (4/10) 
+  Generating static pages using 7 workers (7/10) 
+Γ£ô Generating static pages using 7 workers (10/10) in 491.2ms
+  Finalizing page optimization ...
 
-./src/components/theme-provider.tsx:5:41
-Type error: Cannot find module 'next-themes/dist/types' or its corresponding type declarations.
+Route (app)
+Γöî ╞Æ /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /admin
+Γö£ ╞Æ /admin/clients
+Γö£ ╞Æ /admin/employees
+Γö£ ╞Æ /admin/pets
+Γö£ ╞Æ /admin/records
+Γö£ ╞Æ /api/auth/[...nextauth]
+Γö£ ╞Æ /api/pets
+Γö£ ╞Æ /api/pets/[id]
+Γö£ ╞Æ /api/public/status/[petId]
+Γö£ ╞Æ /api/records/status
+Γö£ Γùï /employee
+Γö£ ╞Æ /inventory
+Γö£ Γùï /login
+Γö£ Γùï /login/forgot-password
+Γö£ ╞Æ /patient/[id]
+Γö£ Γùï /reminders
+Γö£ ╞Æ /reports
+Γö£ ╞Æ /veterinary
+Γöö ╞Æ /veterinary/prescribe/[id]
 
-  3 | import * as React from "react"
-  4 | import { ThemeProvider as NextThemesProvider } from "next-themes"
-> 5 | import { type ThemeProviderProps } from "next-themes/dist/types"
-    |                                         ^
-  6 |
-  7 | export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  8 |     return <NextThemesProvider {...props}>{children}</NextThemesProvider>
-Next.js build worker exited with code: 1 and signal: null
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

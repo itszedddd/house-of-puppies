@@ -1,101 +1,114 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, User, LogOut, Stethoscope, Pill, FileText, Bell, PawPrint, CalendarCheck, Briefcase } from "lucide-react";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { LayoutDashboard, Users, User, Stethoscope, Pill, FileText, TrendingUp, PawPrint, CalendarCheck, Briefcase, Menu, LogOut, Sun, MessageSquare } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { ModeToggle } from "@/components/layout/mode-toggle";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const session = await auth();
+
+    if (!session?.user) {
+        redirect("/login");
+    }
+
+    const role = (session.user as any).role as string;
+
+    const navItems = [
+        { href: "/employee", label: "Employee Dashboard", icon: Briefcase, roles: ["staff"] },
+        { href: "/employee/clients", label: "Clients Directory", icon: Users, roles: ["staff", "vet_admin", "owner"] },
+        { href: "/employee/pets", label: "Pets Registry", icon: PawPrint, roles: ["staff", "vet_admin", "owner"] },
+        { href: "/employee/reminders", label: "AI SMS Reminders", icon: MessageSquare, roles: ["staff"] },
+        { href: "/veterinary", label: "Veterinary", icon: Stethoscope, roles: ["vet_admin"] },
+        { href: "/inventory", label: "Inventory", icon: Pill, roles: ["vet_admin", "owner", "staff"] },
+        { href: "/analytics", label: "Owner Analytics", icon: TrendingUp, roles: ["owner"] },
+        { href: "/reports", label: "Reports", icon: FileText, roles: ["owner"] },
+        { href: "/admin/employees", label: "Manage Employees", icon: Users, roles: ["owner"] },
+    ];
+
+    const filteredNav = navItems.filter((item) => item.roles.includes(role));
+
+    // Reusable Nav rendering component
+    const NavigationLinks = () => (
+        <>
+            {filteredNav.map((item) => {
+                const Icon = item.icon;
+                return (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted/50"
+                        )}
+                    >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                    </Link>
+                );
+            })}
+        </>
+    );
+
     return (
-        <div className="flex min-h-screen flex-col md:flex-row">
-            <aside className="w-full border-r bg-muted/40 md:w-64">
+        <div className="flex min-h-screen flex-col md:flex-row relative">
+            {/* Mobile Header with Hamburger Menu */}
+            <div className="flex md:hidden h-14 items-center justify-between border-b px-4 bg-muted/40 shrink-0 print:hidden">
+                <Link href="/" className="flex items-center gap-2 font-semibold">
+                    <div className="relative h-6 w-6 overflow-hidden rounded-full bg-white">
+                        <img src="/profile-icon-1.png" alt="Logo" className="object-cover h-full w-full" />
+                    </div>
+                    <span className="text-sm">House of Puppies</span>
+                </Link>
+                <div className="flex items-center gap-2">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="icon" className="shrink-0">
+                                <Menu className="h-5 w-5" />
+                                <span className="sr-only">Toggle navigation menu</span>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-[80%] max-w-sm flex flex-col p-4">
+                            <nav className="flex flex-col gap-1 text-lg font-medium mt-6">
+                                <NavigationLinks />
+                                <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                                    <LogoutButton />
+                                    <ModeToggle />
+                                </div>
+                            </nav>
+                        </SheetContent>
+                    </Sheet>
+                </div>
+            </div>
+
+            {/* Desktop Sidebar */}
+            <aside className="hidden md:flex flex-col w-64 border-r bg-muted/40 shrink-0 print:hidden">
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 select-none cursor-default">
-                    <Link href="/admin" className="flex items-center gap-2 font-semibold">
-                        <LayoutDashboard className="h-6 w-6 text-primary" />
+                    <Link href="/" className="flex items-center gap-2 font-semibold">
+                        <div className="relative h-6 w-6 overflow-hidden rounded-full bg-white flex shrink-0">
+                            <img src="/profile-icon-1.png" alt="Logo" className="object-cover h-full w-full" />
+                        </div>
                         <span className="">House of Puppies</span>
                     </Link>
                 </div>
-                <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                    <Link
-                        href="/employee"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <Briefcase className="h-4 w-4" />
-                        Employee Dashboard
-                    </Link>
-                    <Link
-                        href="/veterinary"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <Stethoscope className="h-4 w-4" />
-                        Veterinary
-                    </Link>
-                    <Link
-                        href="/inventory"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <Pill className="h-4 w-4" />
-                        Inventory
-                    </Link>
-                    <Link
-                        href="/reminders"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <Bell className="h-4 w-4" />
-                        Reminders
-                    </Link>
-                    <Link
-                        href="/reports"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <FileText className="h-4 w-4" />
-                        Reports
-                    </Link>
-                    <Link
-                        href="/admin"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Admin Dashboard
-                    </Link>
-                    <Link
-                        href="/admin/employees"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary pl-8"
-                    >
-                        <User className="h-4 w-4" />
-                        Manage Employees
-                    </Link>
-                    <Link
-                        href="/admin/clients"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary pl-8"
-                    >
-                        <Users className="h-4 w-4" />
-                        Manage Pet Owners
-                    </Link>
-                    <Link
-                        href="/admin/pets"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary pl-8"
-                    >
-                        <PawPrint className="h-4 w-4" />
-                        Manage Pets
-                    </Link>
-                    <Link
-                        href="/admin/records"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary pl-8"
-                    >
-                        <CalendarCheck className="h-4 w-4" />
-                        Manage Records
-                    </Link>
+                <nav className="flex flex-col gap-1 px-2 text-sm font-medium lg:px-4 py-4 flex-1">
+                    <NavigationLinks />
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between gap-2">
+                        <LogoutButton />
+                        <ModeToggle />
+                    </div>
                 </nav>
-                <div className="mt-auto p-4">
-                    <LogoutButton />
-                </div>
             </aside>
-            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+            
+            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-x-hidden">
                 {children}
             </main>
-        </div >
+        </div>
     );
 }

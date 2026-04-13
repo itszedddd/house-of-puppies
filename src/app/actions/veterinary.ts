@@ -10,11 +10,19 @@ export async function createConsultation(data: FormData) {
     if (!petId) return { error: "Pet is required" };
 
     try {
-        await prisma.record.create({
+        let purpose = await prisma.purposeOfVisit.findFirst({ where: { name: "consultation" } });
+        if (!purpose) {
+            purpose = await prisma.purposeOfVisit.create({ data: { name: "consultation" } });
+        }
+        
+        const staff = await prisma.staff.findFirst();
+
+        await prisma.clinicalRecord.create({
             data: {
                 petId,
-                serviceType: "Consultation",
-                date: new Date(),
+                purposeId: purpose.id,
+                createdById: staff?.id || "",
+                visitDate: new Date(),
                 status: "In Consultation",
                 notes
             }
@@ -35,16 +43,23 @@ export async function createVaccination(petId: string, data: FormData) {
     if (!name || !dateGivenStr) return { error: "Vaccine name and date are required" };
 
     const dateGiven = new Date(dateGivenStr);
-    const nextDueDate = nextDueDateStr ? new Date(nextDueDateStr) : null;
 
     try {
-        await prisma.vaccination.create({
+        let purpose = await prisma.purposeOfVisit.findFirst({ where: { name: "vaccination" } });
+        if (!purpose) {
+            purpose = await prisma.purposeOfVisit.create({ data: { name: "vaccination" } });
+        }
+
+        const staff = await prisma.staff.findFirst();
+
+        await prisma.clinicalRecord.create({
             data: {
                 petId,
-                name,
-                dateGiven,
-                nextDueDate,
-                notes
+                purposeId: purpose.id,
+                createdById: staff?.id || "",
+                visitDate: dateGiven,
+                status: "Completed",
+                notes: `Vaccine: ${name}. Notes: ${notes}`
             }
         });
         revalidatePath(`/patient/${petId}`);

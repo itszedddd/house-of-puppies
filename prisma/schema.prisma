@@ -48,6 +48,7 @@ model Pet {
   name        String
   species     String?
   breed       String?
+  color       String?
   gender      String?
   dateOfBirth String?
   forms       Form[]
@@ -70,9 +71,35 @@ model ClinicalRecord {
   purposeId     String
   purpose       PurposeOfVisit @relation(fields: [purposeId], references: [id])
   status        String         @default("Pending") // Added for dashboard workflow
+  
+  // Clinical Parameters (Physical Exam)
+  weight        String?
+  temperature   String?
+  heartRate     String?
+  respRate      String?
+  crt           String?
+  stool         String?
+  urine         String?
+  
+  // History & Complaints
+  chiefComplaint String?
+  medicalHistory String?
+  
+  // Vaccination / Deworming History
+  vaxRabies       Boolean @default(false)
+  vax5in1         Boolean @default(false)
+  vaxLepto        Boolean @default(false)
+  vaxCorona       Boolean @default(false)
+  vaxKennelCough  Boolean @default(false)
+  vaxOthers       String?
+  
+  // Grooming Consent
+  consentedToSedation Boolean @default(false)
+
   notes         String?
   diagnosis     String?
   treatment     String?
+  price         Float?         @default(0)
   createdById   String
   createdBy     Staff          @relation(fields: [createdById], references: [id])
   prescriptions PrescriptionRecord[]
@@ -118,6 +145,7 @@ model SmsReminder {
   reminderDate   DateTime
   smsStatusId    String
   smsStatus      SmsStatus      @relation(fields: [smsStatusId], references: [id])
+  message        String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 }

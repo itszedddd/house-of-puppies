@@ -3,18 +3,45 @@ import { prisma } from "@/lib/prisma";
 import RecordForm from "./record-form";
 import RecordActions from "./record-actions";
 
+import SearchSort from "../search-sort";
+
 export const dynamic = "force-dynamic";
 
-export default async function AdminRecordsPage() {
-    const records = await prisma.clinicalRecord.findMany({
-        orderBy: { visitDate: "desc" },
-        include: { pet: { include: { owner: true } }, purpose: true, createdBy: true }
-    });
+export default async function AdminRecordsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+    const params = await searchParams;
+    const search = typeof params?.search === 'string' ? params.search : undefined;
+    const sortBy = typeof params?.sortBy === 'string' ? params.sortBy : 'visitDate';
+    const sortDir = typeof params?.sortDir === 'string' ? params.sortDir : 'desc';
 
-    const pets = await prisma.pet.findMany({
-        orderBy: { name: 'asc' },
-        include: { owner: true }
-    });
+    const validSortKeys = ['visitDate', 'createdAt'] as const;
+    type SortKey = typeof validSortKeys[number];
+    const sortField: SortKey = validSortKeys.includes(sortBy as SortKey) ? (sortBy as SortKey) : 'visitDate';
+
+    let records: any[] = [];
+    let pets: any[] = [];
+    try {
+        records = await prisma.clinicalRecord.findMany({
+            where: search ? {
+                OR: [
+                    { pet: { name: { contains: search } } },
+                    { pet: { owner: { firstName: { contains: search } } } },
+                    { pet: { owner: { lastName: { contains: search } } } },
+                ]
+            } : undefined,
+            orderBy: { [sortField]: sortDir as 'asc' | 'desc' },
+            include: { pet: { include: { owner: true } }, purpose: true, createdBy: true }
+        });
+        pets = await prisma.pet.findMany({
+            orderBy: { name: 'asc' },
+            include: { owner: true }
+        });
+    } catch (e) {
+        console.error("[DB] AdminRecordsPage failed:", e);
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -28,6 +55,14 @@ export default async function AdminRecordsPage() {
                     <CardTitle>All Records</CardTitle>
                 </CardHeader>
                 <CardContent>
+                    <SearchSort
+                        sortOptions={[
+                            { label: 'Visit Date', value: 'visitDate' },
+                            { label: 'Date Added', value: 'createdAt' },
+                        ]}
+                        defaultSort="visitDate"
+                        searchPlaceholder="Search by pet name or owner..."
+                    />
                     <div className="relative w-full overflow-auto">
                         <table className="w-full caption-bottom text-sm text-left">
                             <thead className="[&_tr]:border-b">

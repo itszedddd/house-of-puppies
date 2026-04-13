@@ -34,6 +34,14 @@ export async function createInventoryItem(data: FormData) {
 
         const expiryDate = expiryDateStr ? new Date(expiryDateStr) : null;
 
+        // Check for duplicates
+        const existingItem = await prisma.inventory.findFirst({
+            where: { itemName: { equals: itemName } }
+        });
+        if (existingItem) {
+            return { error: `Item "${itemName}" already exists in inventory.` };
+        }
+
         await prisma.inventory.create({
             data: {
                 itemName,

@@ -9,7 +9,13 @@ export async function GET(
     try {
         const pet = await prisma.pet.findUnique({
             where: { id: params.id },
-            include: { client: true }
+            include: {
+                owner: true,
+                records: {
+                    orderBy: { visitDate: "desc" },
+                    include: { purpose: true, prescriptions: true }
+                }
+            }
         });
         if (!pet) return NextResponse.json({ error: "Not found" }, { status: 404 });
         return NextResponse.json(pet);

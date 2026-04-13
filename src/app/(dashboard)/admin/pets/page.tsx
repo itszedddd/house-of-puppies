@@ -3,23 +3,51 @@ import { prisma } from "@/lib/prisma";
 import PetForm from "./pet-form";
 import PetActions from "./pet-actions";
 
+import SearchSort from "../search-sort";
+
 export const dynamic = "force-dynamic";
 
-export default async function AdminPetsPage() {
-    const pets = await prisma.pet.findMany({
-        orderBy: { createdAt: "desc" },
-        include: { owner: true, records: { orderBy: { visitDate: 'desc' }, take: 1, include: { purpose: true } } }
-    });
+export default async function AdminPetsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+    const params = await searchParams;
+    const search = typeof params?.search === 'string' ? params.search : undefined;
+    const sortBy = typeof params?.sortBy === 'string' ? params.sortBy : 'createdAt';
+    const sortDir = typeof params?.sortDir === 'string' ? params.sortDir : 'desc';
 
-    const clients = await prisma.petOwner.findMany({
-        orderBy: { firstName: 'asc' }
-    });
+    const validSortKeys = ['name', 'createdAt'] as const;
+    type SortKey = typeof validSortKeys[number];
+    const sortField: SortKey = validSortKeys.includes(sortBy as SortKey) ? (sortBy as SortKey) : 'createdAt';
+
+    let pets: any[] = [];
+    let mappedClients: { id: string; name: string }[] = [];
+    try {
+        pets = await prisma.pet.findMany({
+            where: search ? {
+                OR: [
+                    { name: { contains: search } },
+                    { species: { contains: search } },
+                    { breed: { contains: search } },
+                    { owner: { firstName: { contains: search } } },
+                    { owner: { lastName: { contains: search } } }
+                ]
+            } : undefined,
+            orderBy: { [sortField]: sortDir as 'asc' | 'desc' },
+            include: { owner: true, records: { orderBy: { visitDate: 'desc' }, take: 1, include: { purpose: true } } }
+        });
+        const clients = await prisma.petOwner.findMany({ orderBy: { firstName: 'asc' } });
+        mappedClients = clients.map(c => ({ id: c.id, name: `${c.firstName} ${c.lastName}` }));
+    } catch (e) {
+        console.error("[DB] AdminPetsPage failed:", e);
+    }
 
     return (
         <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">Manage Pets</h1>
-                <PetForm clients={clients} />
+                <PetForm clients={mappedClients} />
             </div>
 
             <Card>
@@ -27,6 +55,14 @@ export default async function AdminPetsPage() {
                     <CardTitle>Pet Directory</CardTitle>
                 </CardHeader>
                 <CardContent>
+                    <SearchSort
+                        sortOptions={[
+                            { label: 'Name', value: 'name' },
+                            { label: 'Date Added', value: 'createdAt' },
+                        ]}
+                        defaultSort="createdAt"
+                        searchPlaceholder="Search by pet name, species, breed or owner..."
+                    />
                     <div className="relative w-full overflow-auto">
                         <table className="w-full caption-bottom text-sm text-left">
                             <thead className="[&_tr]:border-b">

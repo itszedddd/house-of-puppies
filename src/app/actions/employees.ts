@@ -15,18 +15,24 @@ export async function createEmployee(data: FormData) {
     try {
         const passwordHash = await bcrypt.hash(password, 10);
 
-        await prisma.user.create({
+        const dbRole = await prisma.role.findUnique({ where: { name: role === "admin" ? "vet_admin" : role } });
+        if (!dbRole) return { error: "Invalid role specified" };
+
+        const newUser = await prisma.staff.create({
             data: {
-                name,
-                email,
+                fullName: name,
+                username: email,
                 passwordHash,
-                role
+                roleId: dbRole.id
             }
         });
         revalidatePath("/admin/employees");
         return { success: true };
-    } catch (e) {
-        return { error: "Failed to create employee" };
+    } catch (e: any) {
+        if (e.code === 'P2002') {
+            return { error: "An employee with this email already exists" };
+        }
+        return { error: "Failed to create employee: " + (e.message || "Unknown error") };
     }
 }
 
@@ -38,24 +44,30 @@ export async function updateEmployee(id: string, data: FormData) {
     if (!name || !email || !role) return { error: "Name, email, and role are required" };
 
     try {
-        await prisma.user.update({
+        const dbRole = await prisma.role.findUnique({ where: { name: role === "admin" ? "vet_admin" : role } });
+        if (!dbRole) return { error: "Invalid role specified" };
+
+        const updatedUser = await prisma.staff.update({
             where: { id },
             data: {
-                name,
-                email,
-                role
+                fullName: name,
+                username: email,
+                roleId: dbRole.id
             }
         });
         revalidatePath("/admin/employees");
         return { success: true };
-    } catch (e) {
-        return { error: "Failed to update employee" };
+    } catch (e: any) {
+        if (e.code === 'P2002') {
+            return { error: "An employee with this email already exists" };
+        }
+        return { error: "Failed to update employee: " + (e.message || "Unknown error") };
     }
 }
 
 export async function deleteEmployee(id: string) {
     try {
-        await prisma.user.delete({
+        await prisma.staff.delete({
             where: { id }
         });
         revalidatePath("/admin/employees");

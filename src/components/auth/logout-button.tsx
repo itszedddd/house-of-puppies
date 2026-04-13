@@ -10,7 +10,10 @@ export function LogoutButton() {
             variant="outline"
             size="sm"
             className="w-full gap-2 cursor-pointer"
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={async () => {
+                await signOut({ redirect: false });
+                window.location.href = '/login';
+            }}
         >
             <LogOut className="h-4 w-4" />
 

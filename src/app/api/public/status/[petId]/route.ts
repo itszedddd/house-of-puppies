@@ -20,13 +20,14 @@ export async function GET(
                 ]
             },
             include: {
-                client: {
+                owner: {
                     select: {
-                        name: true // only public-safe info
+                        firstName: true, lastName: true
                     }
                 },
                 records: {
-                    orderBy: { date: "desc" },
+                    orderBy: { visitDate: "desc" },
+                    include: { purpose: true },
                     take: 1
                 }
             }
@@ -42,9 +43,9 @@ export async function GET(
             id: pet.id,
             name: pet.name,
             breed: pet.breed,
-            clientName: pet.client.name, // Usually enough to mask full identity while reassuring the user it's their pet
+            clientName: pet.owner.firstName + " " + pet.owner.lastName, // Usually enough to mask full identity while reassuring the user it's their pet
             currentStatus: latestRecord ? latestRecord.status : "No Active Service",
-            latestService: latestRecord ? latestRecord.serviceType : null,
+            latestService: latestRecord ? (latestRecord as any).purpose?.name : null,
             lastUpdate: latestRecord ? latestRecord.updatedAt : pet.updatedAt
         });
 

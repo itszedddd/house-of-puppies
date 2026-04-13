@@ -11,16 +11,21 @@ export const dynamic = "force-dynamic";
 
 export default async function PatientProfilePage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const pet = await prisma.pet.findUnique({
-        where: { id: params.id },
-        include: {
-            owner: true,
-            records: { 
-                orderBy: { visitDate: "desc" },
-                include: { purpose: true, prescriptions: { orderBy: { createdAt: "desc" } } }
+    let pet: any = null;
+    try {
+        pet = await prisma.pet.findUnique({
+            where: { id: params.id },
+            include: {
+                owner: true,
+                records: {
+                    orderBy: { visitDate: "desc" },
+                    include: { purpose: true, prescriptions: { orderBy: { createdAt: "desc" } } }
+                }
             }
-        }
-    });
+        });
+    } catch (e) {
+        console.error("[DB] PatientProfilePage failed:", e);
+    }
 
     if (!pet) {
         return (

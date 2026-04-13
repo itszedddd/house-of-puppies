@@ -1,0 +1,14 @@
+
+> house-of-puppies@0.1.0 start
+> next start
+
+Γû▓ Next.js 16.1.5
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.11:3000
+
+Γ£ô Starting...
+Γ£ô Ready in 1362ms
+[auth][error] UntrustedHost: Host must be trusted. URL was: http://localhost:3000/api/auth/session. Read more at https://errors.authjs.dev#untrustedhost
+    at C:\Users\ender\Programming\Zed\anotherPracticeWebsite\HOP\.next\server\edge\chunks\[root-of-the-server]__c6dd1739._.js:416:51340
+    at sg (C:\Users\ender\Programming\Zed\anotherPracticeWebsite\HOP\.next\server\edge\chunks\[root-of-the-server]__c6dd1739._.js:416:54035)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)

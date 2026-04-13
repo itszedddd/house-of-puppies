@@ -1,10 +1,27 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDashboardStats, getRecentClients } from "@/app/actions/dashboard";
 import { Activity, Users, DollarSign, CalendarCheck } from "lucide-react";
+import SearchSort from "./search-sort";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+export default async function AdminPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+    const params = await searchParams;
+    const search = typeof params?.search === 'string' ? params.search : undefined;
+    const sort = typeof params?.sort === 'string' ? params.sort : undefined;
 
-export default async function AdminPage() {
+    // Block access — redirect to proper dashboard
+    const session = await auth();
+    const role = (session?.user as any)?.role;
+    if (role === "staff") redirect("/employee");
+    if (role === "vet_admin") redirect("/veterinary");
+    if (role !== "owner") redirect("/login");
+
     const stats = await getDashboardStats();
-    const recentClients = await getRecentClients();
+    const recentClients = await getRecentClients(search, sort);
 
     return (
         <div className="flex flex-col gap-4">
@@ -57,9 +74,10 @@ export default async function AdminPage() {
             {/* Recent Activity / List */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Recent Clients</CardTitle>
+                    <CardTitle>Clients</CardTitle>
                 </CardHeader>
                 <CardContent>
+                    <SearchSort />
                     <div className="relative w-full overflow-auto">
                         <table className="w-full caption-bottom text-sm text-left">
                             <thead className="[&_tr]:border-b">

@@ -62,7 +62,7 @@ export default function RecordActions({ record }: { record: any }) {
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="date" className="text-right">Date</Label>
-                                <Input id="date" name="date" type="date" defaultValue={new Date(record.date).toISOString().split("T")[0]} className="col-span-3" />
+                                <Input id="date" name="date" type="date" defaultValue={record.visitDate ? new Date(record.visitDate).toISOString().split("T")[0] : ''} className="col-span-3" />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="price" className="text-right">Price</Label>

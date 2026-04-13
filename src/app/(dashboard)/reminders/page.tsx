@@ -1,19 +1,28 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { mockPets } from "@/lib/data";
+import { prisma } from "@/lib/prisma";
 import { MessageSquare, Bell } from "lucide-react";
 
-export default function RemindersPage() {
-    // Mock pets with upcoming due dates
-    const petsWithDueDates = mockPets.filter(p => p.vaccinations.length > 0 || p.service === "Veterinary");
-
-    const handleSendSMS = (petName: string, owner: string) => {
-        // Simulation
-        alert(`SMS sent to ${owner} (09xxxxxxxxx):\n"Reminder: ${petName} is due for vaccination next week at House of Puppies."`);
+export default async function RemindersPage() {
+    let reminders: any[] = [];
+    try {
+        reminders = await prisma.smsReminder.findMany({
+            include: {
+                record: { include: { pet: { include: { owner: true } } } },
+                reminderType: true,
+                smsStatus: true
+            },
+            orderBy: { reminderDate: "asc" }
+        });
+    } catch (e) {
+        console.error("[DB] RemindersPage failed:", e);
+    }
+    const sendAction = async (formData: FormData) => {
+        "use server";
+        // Here we could integrate real SMS logic
+        console.log("Sending SMS to", formData.get("phone"));
     };
 
     return (
@@ -38,23 +47,26 @@ export default function RemindersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {petsWithDueDates.map(pet => (
-                                    <TableRow key={pet.id}>
-                                        <TableCell className="font-medium">{pet.name}</TableCell>
-                                        <TableCell>{pet.ownerName}</TableCell>
+                                {reminders.map(rem => (
+                                    <TableRow key={rem.id}>
+                                        <TableCell className="font-medium">{rem.record.pet.name}</TableCell>
+                                        <TableCell>{rem.record.pet.owner.firstName} {rem.record.pet.owner.lastName}</TableCell>
                                         <TableCell>
-                                            {pet.vaccinations[0]?.nextDueDate || "2026-03-01"}
+                                            {rem.reminderDate.toLocaleDateString()}
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="outline">
-                                                {pet.vaccinations[0]?.name || "Routine Checkup"}
+                                                {rem.reminderType.name}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button size="sm" variant="outline" onClick={() => handleSendSMS(pet.name, pet.ownerName)}>
-                                                <MessageSquare className="h-4 w-4 mr-2" />
-                                                Notify
-                                            </Button>
+                                            <form action={sendAction}>
+                                                <input type="hidden" name="phone" value={rem.record.pet.owner.contactNumber || ""} />
+                                                <Button type="submit" size="sm" variant="outline">
+                                                    <MessageSquare className="h-4 w-4 mr-2" />
+                                                    Notify
+                                                </Button>
+                                            </form>
                                         </TableCell>
                                     </TableRow>
                                 ))}

@@ -3,13 +3,42 @@ import { prisma } from "@/lib/prisma";
 import ClientForm from "./client-form";
 import ClientActions from "./client-actions";
 
+import SearchSort from "../search-sort";
+
 export const dynamic = "force-dynamic";
 
-export default async function AdminClientsPage() {
-    const clients = await prisma.petOwner.findMany({
-        orderBy: { createdAt: "desc" },
-        include: { pets: true }
-    });
+export default async function AdminClientsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+    const params = await searchParams;
+    const search = typeof params?.search === 'string' ? params.search : undefined;
+    const sortBy = typeof params?.sortBy === 'string' ? params.sortBy : 'createdAt';
+    const sortDir = typeof params?.sortDir === 'string' ? params.sortDir : 'desc';
+
+    // Build valid sortable keys
+    const validSortKeys = ['firstName', 'createdAt'] as const;
+    type SortKey = typeof validSortKeys[number];
+    const sortField: SortKey = validSortKeys.includes(sortBy as SortKey) ? (sortBy as SortKey) : 'createdAt';
+
+    let clients: any[] = [];
+    try {
+        clients = await prisma.petOwner.findMany({
+            where: search ? {
+                OR: [
+                    { firstName: { contains: search } },
+                    { lastName: { contains: search } },
+                    { email: { contains: search } },
+                    { contactNumber: { contains: search } }
+                ]
+            } : undefined,
+            orderBy: { [sortField]: sortDir as 'asc' | 'desc' },
+            include: { pets: true }
+        });
+    } catch (e) {
+        console.error("[DB] AdminClientsPage failed:", e);
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -23,6 +52,14 @@ export default async function AdminClientsPage() {
                     <CardTitle>Client Directory</CardTitle>
                 </CardHeader>
                 <CardContent>
+                    <SearchSort
+                        sortOptions={[
+                            { label: 'Name', value: 'firstName' },
+                            { label: 'Date Added', value: 'createdAt' },
+                        ]}
+                        defaultSort="createdAt"
+                        searchPlaceholder="Search by name, email or contact..."
+                    />
                     <div className="relative w-full overflow-auto">
                         <table className="w-full caption-bottom text-sm text-left">
                             <thead className="[&_tr]:border-b">

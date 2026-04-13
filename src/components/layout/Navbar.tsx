@@ -9,9 +9,9 @@ export function Navbar() {
             <div className="container flex h-16 items-center justify-between">
                 <div className="mr-4 hidden md:flex">
                     <Link href="/" className="mr-6 flex items-center space-x-2">
-                        <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-primary">
+                        <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-primary bg-white">
                             <img
-                                src="/branding.jpg"
+                                src="/primary-logo-1.png"
                                 alt="House of Puppies Logo"
                                 className="h-full w-full object-cover"
                             />

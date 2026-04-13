@@ -4,11 +4,11 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export async function resetPassword(formData: FormData) {
-    const email = formData.get("email")?.toString();
+    const username = formData.get("email")?.toString();
     const newPassword = formData.get("newPassword")?.toString();
     const confirmPassword = formData.get("confirmPassword")?.toString();
 
-    if (!email || !newPassword || !confirmPassword) {
+    if (!username || !newPassword || !confirmPassword) {
         return { error: "All fields are required" };
     }
 
@@ -21,17 +21,17 @@ export async function resetPassword(formData: FormData) {
     }
 
     try {
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.staff.findUnique({ where: { username } });
 
         if (!user) {
             // Typically in prod we don't say if email exists, but for internal app it's fine.
-            return { error: "No user found with this email" };
+            return { error: "No user found with this username" };
         }
 
         const passwordHash = await bcrypt.hash(newPassword, 10);
 
         await prisma.staff.update({
-            where: { email },
+            where: { username },
             data: { passwordHash }
         });
 
