@@ -22,14 +22,25 @@ export default async function DashboardLayout({
     const role = (session.user as any).role as string;
 
     const navItems = [
-        { href: "/employee", label: "Employee Dashboard", icon: Briefcase, roles: ["staff"] },
-        { href: "/employee/clients", label: "Clients Directory", icon: Users, roles: ["staff", "vet_admin", "owner"] },
-        { href: "/employee/pets", label: "Pets Registry", icon: PawPrint, roles: ["staff", "vet_admin", "owner"] },
-        { href: "/employee/reminders", label: "AI SMS Reminders", icon: MessageSquare, roles: ["staff"] },
+        // Staff Records — intake, clients, pets
+        { href: "/employee", label: "Records Dashboard", icon: Briefcase, roles: ["staff_records", "vet_admin"] },
+        { href: "/employee/clients", label: "Clients Directory", icon: Users, roles: ["staff_records", "vet_admin"] },
+        { href: "/employee/pets", label: "Pets Registry", icon: PawPrint, roles: ["staff_records", "vet_admin"] },
+
+        // Veterinarian — examine patients
         { href: "/veterinary", label: "Veterinary", icon: Stethoscope, roles: ["vet_admin"] },
-        { href: "/inventory", label: "Inventory", icon: Pill, roles: ["vet_admin", "owner", "staff"] },
-        { href: "/analytics", label: "Owner Analytics", icon: TrendingUp, roles: ["owner"] },
-        { href: "/reports", label: "Reports", icon: FileText, roles: ["owner"] },
+
+        // Staff SMS — AI reminders
+        { href: "/employee/reminders", label: "AI SMS Reminders", icon: MessageSquare, roles: ["staff_sms", "vet_admin"] },
+
+        // Staff Inventory
+        { href: "/inventory", label: "Inventory", icon: Pill, roles: ["staff_inventory", "vet_admin"] },
+
+        // Owner & Admin — analytics and reports
+        { href: "/analytics", label: "Analytics & Sales", icon: TrendingUp, roles: ["owner", "vet_admin"] },
+        { href: "/reports", label: "Reports", icon: FileText, roles: ["owner", "vet_admin"] },
+
+        // Owner only — manage employees
         { href: "/admin/employees", label: "Manage Employees", icon: Users, roles: ["owner"] },
     ];
 

@@ -138,7 +138,8 @@ export async function completeVetRecord(id: string, data: FormData) {
     } catch(e) {}
 
     try {
-        await prisma.clinicalRecord.update({
+        // Update the clinical record
+        const updatedRecord = await prisma.clinicalRecord.update({
             where: { id },
             data: {
                 diagnosis,
@@ -148,30 +149,29 @@ export async function completeVetRecord(id: string, data: FormData) {
             }
         });
 
+        // Create prescriptions if any
         if (prescriptions.length > 0) {
-            // Need to get the petId first
-            const record = await prisma.clinicalRecord.findUnique({ where: { id } });
-            if (record) {
-                for (const rx of prescriptions) {
-                    if (!rx.medicationName) continue;
-                    await prisma.prescription.create({
-                        data: {
-                            recordId: id,
-                            petId: record.petId,
-                            medicationName: rx.medicationName,
-                            dosage: rx.dosage || "",
-                            instructions: rx.instructions || "",
-                            issuedDate: new Date()
-                        }
-                    });
-                }
+            for (const rx of prescriptions) {
+                if (!rx.medicationName) continue;
+                await prisma.prescriptionRecord.create({
+                    data: {
+                        recordId: id,
+                        createdById: updatedRecord.createdById,
+                        medicationName: rx.medicationName,
+                        dosage: rx.dosage || "",
+                        instructions: rx.instructions || "",
+                        prescriptionDate: new Date(),
+                    }
+                });
             }
         }
 
         revalidatePath("/veterinary");
         revalidatePath("/analytics");
+        revalidatePath("/reports");
         return { success: true };
     } catch (e) {
+        console.error("[completeVetRecord] Error:", e);
         return { error: "Failed to complete record" };
     }
 }

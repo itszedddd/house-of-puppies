@@ -16,7 +16,9 @@ export default async function AdminPage({
     // Block access — redirect to proper dashboard
     const session = await auth();
     const role = (session?.user as any)?.role;
-    if (role === "staff") redirect("/employee");
+    if (role === "staff_records") redirect("/employee");
+    if (role === "staff_sms") redirect("/employee/reminders");
+    if (role === "staff_inventory") redirect("/inventory");
     if (role === "vet_admin") redirect("/veterinary");
     if (role !== "owner") redirect("/login");
 

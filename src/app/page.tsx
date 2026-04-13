@@ -18,12 +18,17 @@ export default async function RootPage() {
     // Role-based routing for authenticated users
     const role = (session.user as any).role as string;
 
-    if (role === "staff") {
+    if (role === "staff_records") {
         redirect("/employee");
+    } else if (role === "staff_sms") {
+        redirect("/employee/reminders");
+    } else if (role === "staff_inventory") {
+        redirect("/inventory");
     } else if (role === "owner") {
         redirect("/analytics");
-    } else {
-        // Vets/Admins go to Veterinary dashboard
+    } else if (role === "vet_admin") {
         redirect("/veterinary");
+    } else {
+        redirect("/login");
     }
 }

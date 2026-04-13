@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EmployeePage() {
     const session = await auth();
-    if (!session?.user || (session.user as any).role !== "staff") {
+    if (!session?.user || !["staff_records", "vet_admin"].includes((session.user as any).role)) {
         redirect("/login");
     }
 

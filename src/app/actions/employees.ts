@@ -15,7 +15,7 @@ export async function createEmployee(data: FormData) {
     try {
         const passwordHash = await bcrypt.hash(password, 10);
 
-        const dbRole = await prisma.role.findUnique({ where: { name: role === "admin" ? "vet_admin" : role } });
+        const dbRole = await prisma.role.findUnique({ where: { name: role } });
         if (!dbRole) return { error: "Invalid role specified" };
 
         const newUser = await prisma.staff.create({
@@ -44,7 +44,7 @@ export async function updateEmployee(id: string, data: FormData) {
     if (!name || !email || !role) return { error: "Name, email, and role are required" };
 
     try {
-        const dbRole = await prisma.role.findUnique({ where: { name: role === "admin" ? "vet_admin" : role } });
+        const dbRole = await prisma.role.findUnique({ where: { name: role } });
         if (!dbRole) return { error: "Invalid role specified" };
 
         const updatedUser = await prisma.staff.update({

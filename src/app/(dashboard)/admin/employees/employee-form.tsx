@@ -67,13 +67,15 @@ export default function EmployeeForm() {
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="role" className="text-right">Role *</Label>
                             <div className="col-span-3">
-                                <Select name="role" defaultValue="staff">
+                                <Select name="role" defaultValue="staff_records">
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select role" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="staff">Staff</SelectItem>
-                                        <SelectItem value="admin">Admin</SelectItem>
+                                        <SelectItem value="staff_records">Staff — Records</SelectItem>
+                                        <SelectItem value="staff_sms">Staff — SMS Scheduler</SelectItem>
+                                        <SelectItem value="staff_inventory">Staff — Inventory</SelectItem>
+                                        <SelectItem value="vet_admin">Admin / Veterinarian</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -13,12 +13,13 @@ async function main() {
   await prisma.pet.deleteMany();
   await prisma.petOwner.deleteMany();
   await prisma.inventory.deleteMany();
+  await prisma.staff.deleteMany();
 
   console.log("✅ Old data cleared.");
   console.log("Seeding lookup tables...");
 
-  // Roles
-  const roles = ["staff", "vet_admin", "owner"];
+  // Roles — NEW granular roles
+  const roles = ["owner", "vet_admin", "staff_records", "staff_sms", "staff_inventory"];
   for (const name of roles) {
     await prisma.role.upsert({
       where: { name },
@@ -26,6 +27,10 @@ async function main() {
       create: { name },
     });
   }
+  // Clean up old generic "staff" role if it exists
+  try {
+    await prisma.role.delete({ where: { name: "staff" } });
+  } catch (e) { /* doesn't exist, ignore */ }
 
   // Purpose of Visit
   const purposes = ["grooming", "check_up", "surgery", "lab_test", "vaccination"];
@@ -83,18 +88,20 @@ async function main() {
   const passwordHash = await bcrypt.hash("password123", 10);
 
   const vetAdminRole = await prisma.role.findUnique({ where: { name: "vet_admin" } });
-  const staffRole = await prisma.role.findUnique({ where: { name: "staff" } });
+  const staffRecordsRole = await prisma.role.findUnique({ where: { name: "staff_records" } });
+  const staffSmsRole = await prisma.role.findUnique({ where: { name: "staff_sms" } });
+  const staffInventoryRole = await prisma.role.findUnique({ where: { name: "staff_inventory" } });
   const ownerRole = await prisma.role.findUnique({ where: { name: "owner" } });
 
   let vetStaff: any = null;
-  let staffUser: any = null;
+  let staffRecordsUser: any = null;
 
   if (vetAdminRole) {
     vetStaff = await prisma.staff.upsert({
       where: { username: "admin" },
       update: {},
       create: {
-        fullName: "Dr. Santos (Vet Admin)",
+        fullName: "Dr. Santos (Veterinarian/Admin)",
         username: "admin",
         passwordHash,
         roleId: vetAdminRole.id,
@@ -103,18 +110,46 @@ async function main() {
     console.log("✅ Vet Admin 'admin' ready.");
   }
 
-  if (staffRole) {
-    staffUser = await prisma.staff.upsert({
-      where: { username: "staff" },
+  if (staffRecordsRole) {
+    staffRecordsUser = await prisma.staff.upsert({
+      where: { username: "staff_records" },
       update: {},
       create: {
-        fullName: "Maria Cruz (Staff)",
-        username: "staff",
+        fullName: "Maria Cruz (Records Staff)",
+        username: "staff_records",
         passwordHash,
-        roleId: staffRole.id,
+        roleId: staffRecordsRole.id,
       },
     });
-    console.log("✅ Staff 'staff' ready.");
+    console.log("✅ Staff Records 'staff_records' ready.");
+  }
+
+  if (staffSmsRole) {
+    await prisma.staff.upsert({
+      where: { username: "staff_sms" },
+      update: {},
+      create: {
+        fullName: "Ana Reyes (SMS Scheduler)",
+        username: "staff_sms",
+        passwordHash,
+        roleId: staffSmsRole.id,
+      },
+    });
+    console.log("✅ Staff SMS 'staff_sms' ready.");
+  }
+
+  if (staffInventoryRole) {
+    await prisma.staff.upsert({
+      where: { username: "staff_inventory" },
+      update: {},
+      create: {
+        fullName: "Carlos Mendoza (Inventory Staff)",
+        username: "staff_inventory",
+        passwordHash,
+        roleId: staffInventoryRole.id,
+      },
+    });
+    console.log("✅ Staff Inventory 'staff_inventory' ready.");
   }
 
   if (ownerRole) {
@@ -202,44 +237,34 @@ async function main() {
 
   console.log("✅ 10 mock pets created.");
 
-  // ===================== MOCK CLINICAL RECORDS (Pending-Vet) =====================
+  // ===================== MOCK CLINICAL RECORDS =====================
   console.log("Seeding mock clinical records...");
 
   const checkUp = await prisma.purposeOfVisit.findUnique({ where: { name: "check_up" } });
   const grooming = await prisma.purposeOfVisit.findUnique({ where: { name: "grooming" } });
   const vaccination = await prisma.purposeOfVisit.findUnique({ where: { name: "vaccination" } });
   const labTest = await prisma.purposeOfVisit.findUnique({ where: { name: "lab_test" } });
+  const surgery = await prisma.purposeOfVisit.findUnique({ where: { name: "surgery" } });
 
-  const creatorId = staffUser?.id || vetStaff?.id || "";
+  const creatorId = staffRecordsUser?.id || vetStaff?.id || "";
 
   // 4 pets with Pending-Vet status (ready for vet to examine)
   await prisma.clinicalRecord.create({
     data: {
-      petId: pet1.id,
-      purposeId: checkUp!.id,
-      createdById: creatorId,
-      status: "Pending-Vet",
-      visitDate: new Date(),
-      weight: "12.5",
-      temperature: "38.5",
-      heartRate: "80",
-      respRate: "20",
+      petId: pet1.id, purposeId: checkUp!.id, createdById: creatorId,
+      status: "Pending-Vet", visitDate: new Date(),
+      weight: "12.5", temperature: "38.5", heartRate: "80", respRate: "20",
       chiefComplaint: "Not eating for 2 days, lethargic",
       medicalHistory: "Previous deworming last month",
-      vaxRabies: true,
-      vax5in1: true,
+      vaxRabies: true, vax5in1: true,
     },
   });
 
   await prisma.clinicalRecord.create({
     data: {
-      petId: pet3.id,
-      purposeId: grooming!.id,
-      createdById: creatorId,
-      status: "Pending-Vet",
-      visitDate: new Date(),
-      weight: "5.2",
-      temperature: "38.8",
+      petId: pet3.id, purposeId: grooming!.id, createdById: creatorId,
+      status: "Pending-Vet", visitDate: new Date(),
+      weight: "5.2", temperature: "38.8",
       chiefComplaint: "Full grooming service requested, matted fur",
       consentedToSedation: true,
     },
@@ -247,75 +272,65 @@ async function main() {
 
   await prisma.clinicalRecord.create({
     data: {
-      petId: pet7.id,
-      purposeId: vaccination!.id,
-      createdById: creatorId,
-      status: "Pending-Vet",
-      visitDate: new Date(),
-      weight: "28.0",
-      temperature: "38.2",
-      heartRate: "90",
+      petId: pet7.id, purposeId: vaccination!.id, createdById: creatorId,
+      status: "Pending-Vet", visitDate: new Date(),
+      weight: "28.0", temperature: "38.2", heartRate: "90",
       chiefComplaint: "Due for annual vaccination booster",
-      vaxRabies: true,
-      vax5in1: false,
+      vaxRabies: true, vax5in1: false,
     },
   });
 
   await prisma.clinicalRecord.create({
     data: {
-      petId: pet6.id,
-      purposeId: labTest!.id,
-      createdById: creatorId,
-      status: "Pending-Vet",
-      visitDate: new Date(),
-      weight: "4.1",
-      temperature: "39.1",
-      heartRate: "120",
-      respRate: "30",
+      petId: pet6.id, purposeId: labTest!.id, createdById: creatorId,
+      status: "Pending-Vet", visitDate: new Date(),
+      weight: "4.1", temperature: "39.1", heartRate: "120", respRate: "30",
       chiefComplaint: "Vomiting and diarrhea for 3 days",
       medicalHistory: "History of sensitive stomach",
-      vaxRabies: true,
-      vaxLepto: true,
+      vaxRabies: true, vaxLepto: true,
     },
   });
 
-  // Adding 15 Historical completed records for Analytics graph tracing back a month or so
-  const historicalDataTemplate = [
-    { pet: pet5, purpose: checkUp!.id, daysAgo: 1, price: 500, treatment: "Routine checkup." },
-    { pet: pet9, purpose: vaccination!.id, daysAgo: 2, price: 1200, treatment: "Administered 5-in-1 and Rabies." },
-    { pet: pet2, purpose: grooming!.id, daysAgo: 4, price: 800, treatment: "Show cut and de-shedding." },
-    { pet: pet4, purpose: checkUp!.id, daysAgo: 5, price: 650, treatment: "Treated mild ear infection." },
-    { pet: pet8, purpose: labTest!.id, daysAgo: 7, price: 2500, treatment: "Bloodwork panel completed." },
-    { pet: pet1, purpose: vaccination!.id, daysAgo: 8, price: 750, treatment: "Deworming and anti-rabies." },
-    { pet: pet6, purpose: grooming!.id, daysAgo: 10, price: 900, treatment: "Full groom + nail trim." },
-    { pet: pet10, purpose: checkUp!.id, daysAgo: 12, price: 400, treatment: "Follow up. Patient doing well." },
-    { pet: pet3, purpose: vaccination!.id, daysAgo: 14, price: 800, treatment: "Annual booster." },
-    { pet: pet7, purpose: checkUp!.id, daysAgo: 15, price: 600, treatment: "Consult for skin rash." },
-    { pet: pet5, purpose: grooming!.id, daysAgo: 18, price: 750, treatment: "Bath and blow dry." },
-    { pet: pet9, purpose: labTest!.id, daysAgo: 20, price: 1800, treatment: "Fecal and urine analysis." },
-    { pet: pet2, purpose: checkUp!.id, daysAgo: 22, price: 500, treatment: "General wellness check." },
-    { pet: pet8, purpose: vaccination!.id, daysAgo: 25, price: 900, treatment: "Core vaccines updated." },
-    { pet: pet4, purpose: grooming!.id, daysAgo: 28, price: 850, treatment: "Lion cut applied." },
+  // ===================== HISTORICAL RECORDS (12+ months for yearly analytics) =====================
+  const allPets = [pet1, pet2, pet3, pet4, pet5, pet6, pet7, pet8, pet9, pet10];
+  const allPurposes = [checkUp!, grooming!, vaccination!, labTest!, surgery!];
+  const treatments = [
+    "Routine checkup completed.", "Full grooming service.", "Administered core vaccines.",
+    "Bloodwork panel analyzed.", "Minor surgical procedure.", "Deworming treatment.",
+    "Ear infection treated.", "Dental cleaning.", "Skin allergy treatment.", "Follow-up - stable."
   ];
 
-  for (const hist of historicalDataTemplate) {
-    await prisma.clinicalRecord.create({
-      data: {
-        petId: hist.pet.id,
-        purposeId: hist.purpose,
-        createdById: creatorId,
-        status: "Completed",
-        visitDate: new Date(Date.now() - hist.daysAgo * 24 * 60 * 60 * 1000),
-        weight: "10.0",
-        temperature: "38.5",
-        diagnosis: "Historical Record",
-        treatment: hist.treatment,
-        price: hist.price,
-      },
-    });
+  // Generate ~60 completed records spread over 14 months
+  for (let monthsAgo = 0; monthsAgo < 14; monthsAgo++) {
+    const recordsThisMonth = 3 + Math.floor(Math.random() * 4); // 3–6 records per month
+    for (let j = 0; j < recordsThisMonth; j++) {
+      const pet = allPets[Math.floor(Math.random() * allPets.length)];
+      const purpose = allPurposes[Math.floor(Math.random() * allPurposes.length)];
+      const treatment = treatments[Math.floor(Math.random() * treatments.length)];
+      const price = 300 + Math.floor(Math.random() * 2500);
+      const dayOffset = Math.floor(Math.random() * 28);
+      const visitDate = new Date();
+      visitDate.setMonth(visitDate.getMonth() - monthsAgo);
+      visitDate.setDate(Math.max(1, dayOffset));
+
+      await prisma.clinicalRecord.create({
+        data: {
+          petId: pet.id,
+          purposeId: purpose.id,
+          createdById: creatorId,
+          status: "Completed",
+          visitDate,
+          weight: (3 + Math.random() * 30).toFixed(1),
+          temperature: (37.5 + Math.random() * 2).toFixed(1),
+          diagnosis: `${purpose.name} — ${treatment}`,
+          treatment,
+          price,
+        },
+      });
+    }
   }
 
-  console.log("✅ Mock clinical records created (4 Pending-Vet, 15 Completed).");
+  console.log("✅ Mock clinical records created (4 Pending-Vet + ~60 historical).");
 
   // ===================== MOCK INVENTORY =====================
   console.log("Seeding mock inventory...");

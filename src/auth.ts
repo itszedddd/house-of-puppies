@@ -24,7 +24,7 @@ export const authConfig = {
                     console.log("[AUTH] Using static fallback login for admin");
                     return {
                         id: "static-admin-id",
-                        name: "System Administrator",
+                        name: "Dr. Santos (Veterinarian/Admin)",
                         username: "admin",
                         role: "vet_admin",
                     };

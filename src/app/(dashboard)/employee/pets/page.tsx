@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function PetsPage() {
     const session = await auth();
     const role = (session?.user as any)?.role;
-    if (!session?.user || !["staff", "vet_admin", "owner"].includes(role)) {
+    if (!session?.user || !["staff_records", "vet_admin"].includes(role)) {
         redirect("/login");
     }
 

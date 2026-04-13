@@ -6,9 +6,15 @@ import { Button } from "@/components/ui/button";
 import { revalidatePath } from "next/cache";
 import { CreateReminderDialog } from "./create-reminder-dialog";
 import { RemindersTable } from "./reminders-table";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export default async function EmployeeRemindersPage() {
-    // Fetch mock/real SMS Reminders from DB
+    const session = await auth();
+    if (!session?.user || !["staff_sms", "vet_admin"].includes((session.user as any).role)) {
+        redirect("/login");
+    }
+
     const reminders = await prisma.smsReminder.findMany({
         include: {
             record: {

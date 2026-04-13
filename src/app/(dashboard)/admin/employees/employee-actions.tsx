@@ -85,8 +85,10 @@ export default function EmployeeActions({ employee }: { employee: any }) {
                                             <SelectValue placeholder="Select role" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="staff">Staff</SelectItem>
-                                            <SelectItem value="admin">Admin</SelectItem>
+                                            <SelectItem value="staff_records">Staff — Records</SelectItem>
+                                            <SelectItem value="staff_sms">Staff — SMS Scheduler</SelectItem>
+                                            <SelectItem value="staff_inventory">Staff — Inventory</SelectItem>
+                                            <SelectItem value="vet_admin">Admin / Veterinarian</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

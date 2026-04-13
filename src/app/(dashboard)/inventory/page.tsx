@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function InventoryPage() {
     const session = await auth();
-    if (!session?.user || ((session.user as any).role !== "vet_admin" && (session.user as any).role !== "owner" && (session.user as any).role !== "staff")) {
+    if (!session?.user || !["staff_inventory", "vet_admin", "owner"].includes((session.user as any).role)) {
         redirect("/login");
     }
 
