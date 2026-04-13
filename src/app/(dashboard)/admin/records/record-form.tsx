@@ -15,11 +15,11 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { createRecord } from "@/app/actions/records";
 import { Textarea } from "@/components/ui/textarea";
-import { Pet, Client } from "@prisma/client";
+import { Pet, PetOwner } from "@prisma/client";
 
-type PetWithClient = Pet & { client: Client };
+type PetWithOwner = Pet & { owner: PetOwner };
 
-export default function RecordForm({ pets }: { pets: PetWithClient[] }) {
+export default function RecordForm({ pets }: { pets: PetWithOwner[] }) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -68,7 +68,7 @@ export default function RecordForm({ pets }: { pets: PetWithClient[] }) {
                             >
                                 <option value="" disabled selected>Select a Pet</option>
                                 {pets.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} ({p.client.name})</option>
+                                    <option key={p.id} value={p.id}>{p.name} ({p.owner.firstName} {p.owner.lastName})</option>
                                 ))}
                             </select>
                         </div>

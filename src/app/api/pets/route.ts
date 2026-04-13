@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     try {
         const pets = await prisma.pet.findMany({
             orderBy: { createdAt: "desc" },
             include: {
-                client: true,
+                owner: true,
                 records: {
-                    orderBy: { date: "desc" },
-                    take: 1
+                    orderBy: { visitDate: "desc" },
+                    take: 1,
+                    include: { purpose: true }
                 }
             }
         });

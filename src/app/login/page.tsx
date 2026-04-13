@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
     const router = useRouter();
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -23,12 +23,12 @@ export default function LoginPage() {
         try {
             const result = await signIn("credentials", {
                 redirect: false,
-                email,
+                username,
                 password,
             });
 
             if (result?.error) {
-                setError("Invalid email or password");
+                setError("Invalid username or password");
             } else {
                 router.push("/admin");
                 router.refresh();
@@ -41,12 +41,12 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-muted/40 px-4">
+        <div className="flex h-screen w-full items-center justify-center bg-muted/40 px-4 select-none cursor-default">
             <Card className="w-full max-w-sm">
                 <CardHeader className="text-center">
                     <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
                     <CardDescription>
-                        Enter your email below to login to your dashboard.
+                        Enter your username below to login to your dashboard.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -57,23 +57,20 @@ export default function LoginPage() {
                             </div>
                         )}
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="username">Username</Label>
                             <Input
-                                id="email"
-                                type="email"
-                                placeholder="m@example.com"
+                                id="username"
+                                type="text"
+                                placeholder="admin"
                                 required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                autoComplete="email"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                autoComplete="username"
                             />
                         </div>
                         <div className="grid gap-2">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="password">Password</Label>
-                                <a href="/login/forgot-password" className="text-sm text-primary hover:underline" tabIndex={-1}>
-                                    Forgot password?
-                                </a>
                             </div>
                             <Input
                                 id="password"

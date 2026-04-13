@@ -11,28 +11,35 @@ export const dynamic = "force-dynamic";
 export default async function VeterinaryPage() {
     const pets = await prisma.pet.findMany({
         include: {
-            client: true,
+            owner: true,
             records: {
-                where: { serviceType: "Consultation" },
-                orderBy: { date: "desc" }
+                orderBy: { visitDate: "desc" },
+                include: { purpose: true }
             }
         }
     });
 
     // Determine current logical status for each pet based on records
     const vetPets = pets.map(pet => {
-        // Find the latest Consultation record
-        const latestRecord = pet.records[0];
+        // Find the latest "Consultation" or related medical record
+        // In the new schema, we check purpose.name
+        const latestRecord = pet.records.find(r => 
+            r.purpose.name === "check_up" || 
+            r.purpose.name === "surgery" || 
+            r.purpose.name === "lab_test"
+        );
+        
         let status = "Discharged";
         if (latestRecord) {
-            status = latestRecord.status; // "scheduled", "In Consultation", "completed"
+            status = latestRecord.status; // "Pending", "In Consultation", "Completed"
         }
+        
         return {
             ...pet,
-            status: status === "completed" ? "Completed" : status === "In Consultation" ? "In Consultation" : "Pending",
-            ownerName: pet.client.name
+            status: status || "Pending",
+            ownerName: pet.owner ? `${pet.owner.firstName} ${pet.owner.lastName}` : "Unknown"
         };
-    }).filter(p => p.records.length > 0 && p.status !== "Completed");
+    }).filter(p => p.records.length > 0 && p.status !== "Completed" && p.status !== "Discharged");
 
     const allPets = pets;
 
@@ -71,7 +78,7 @@ export default async function VeterinaryPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {allPets.filter(p => p.records.some(r => r.serviceType === "Consultation" && r.status === "completed")).length}
+                            {allPets.filter(p => p.records.some(r => r.serviceType === "Consultation" && r.status === "Completed")).length}
                         </div>
                         <p className="text-xs text-muted-foreground">Discharged</p>
                     </CardContent>

@@ -6,30 +6,24 @@ export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
     const totalPatients = await prisma.pet.count();
-    const servicesDelivered = await prisma.record.count();
+    const servicesDelivered = await prisma.clinicalRecord.count();
 
-    const lowStockItemsData = await prisma.inventoryItem.findMany({
-        where: { status: "Low" }
+    const lowStockItemsData = await prisma.inventory.findMany({
+        where: { stock: { lte: 10 } } // changed from status: "Low" to stock threshold
     });
     const lowStockItemsCount = lowStockItemsData.length;
 
     // Fetch Recent Activities
-    const recentRecords = await prisma.record.findMany({
+    const recentRecords = await prisma.clinicalRecord.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
-        include: { pet: true }
+        include: { pet: true, purpose: true }
     });
 
-    const recentPrescriptions = await prisma.prescription.findMany({
+    const recentPrescriptions = await prisma.prescriptionRecord.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
-        include: { pet: true }
-    });
-
-    const recentVaccinations = await prisma.vaccination.findMany({
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: { pet: true }
+        include: { record: { include: { pet: true } } }
     });
 
     // Combine and sort by date
@@ -37,32 +31,21 @@ export default async function ReportsPage() {
         ...recentRecords.map(r => ({
             id: `rec-${r.id}`,
             title: r.pet.name,
-            description: `Service: ${r.serviceType} - ${r.status}`,
+            description: `Purpose: ${r.purpose?.name || "Check-up"} - ${r.status}`,
             date: r.createdAt,
             type: 'Service'
         })),
         ...recentPrescriptions.map(p => ({
             id: `pres-${p.id}`,
-            title: p.pet.name,
-            description: `Prescription: ${p.medicine}`,
+            title: p.record.pet.name,
+            description: `Prescription: ${p.medicationName}`,
             date: p.createdAt,
             type: 'Prescription'
-        })),
-        ...recentVaccinations.map(v => ({
-            id: `vac-${v.id}`,
-            title: v.pet.name,
-            description: `Vaccination: ${v.name}`,
-            date: v.createdAt,
-            type: 'Vaccination'
         }))
     ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 7);
 
     // Calculate actual revenue
-    const recordsWithPrice = await prisma.record.findMany({
-        where: { price: { not: null } },
-        select: { price: true }
-    });
-    const totalRevenue = recordsWithPrice.reduce((sum, r) => sum + (r.price || 0), 0);
+    const totalRevenue = 0; // Price calculation removed in new schema
 
     return (
         <div className="grid gap-6">
@@ -153,7 +136,7 @@ export default async function ReportsPage() {
                             {lowStockItemsData.map(item => (
                                 <div key={item.id} className="flex items-center">
                                     <div className="ml-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">{item.name}</p>
+                                        <p className="text-sm font-medium leading-none">{item.itemName}</p>
                                         <p className="text-sm text-muted-foreground">
                                             {item.stock} {item.unit} remaining
                                         </p>

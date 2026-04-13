@@ -14,10 +14,11 @@ export default async function PatientProfilePage(props: { params: Promise<{ id: 
     const pet = await prisma.pet.findUnique({
         where: { id: params.id },
         include: {
-            client: true,
-            vaccinations: { orderBy: { dateGiven: "desc" } },
-            records: { orderBy: { date: "desc" } },
-            prescriptions: { orderBy: { issuedDate: "desc" } }
+            owner: true,
+            records: { 
+                orderBy: { visitDate: "desc" },
+                include: { purpose: true, prescriptions: { orderBy: { createdAt: "desc" } } }
+            }
         }
     });
 
@@ -32,8 +33,9 @@ export default async function PatientProfilePage(props: { params: Promise<{ id: 
         );
     }
 
-    const latestRecord = pet.records[0];
-    const status = latestRecord ? (latestRecord.status === "completed" ? "Completed" : latestRecord.status) : "Pending";
+    const latestRecord = pet.records?.[0];
+    const status = latestRecord?.status || "Pending";
+    const allPrescriptions = pet.records?.flatMap(r => r.prescriptions) || [];
 
     return (
         <div className="grid gap-6">
@@ -62,11 +64,11 @@ export default async function PatientProfilePage(props: { params: Promise<{ id: 
                         </div>
                         <div className="flex justify-between border-b pb-2">
                             <span className="font-medium">Owner:</span>
-                            <span className="text-muted-foreground">{pet.client.name}</span>
+                            <span className="text-muted-foreground">{pet.owner.firstName} {pet.owner.lastName}</span>
                         </div>
                         <div className="flex justify-between border-b pb-2">
                             <span className="font-medium">Contact:</span>
-                            <span className="text-muted-foreground">{pet.client.phone || pet.client.email || "N/A"}</span>
+                            <span className="text-muted-foreground">{pet.owner.contactNumber || pet.owner.email || "N/A"}</span>
                         </div>
                         <div className="flex justify-between pt-2">
                             <span className="font-medium">Status:</span>
@@ -106,8 +108,8 @@ export default async function PatientProfilePage(props: { params: Promise<{ id: 
                             {pet.records.map((record, i) => (
                                 <div key={i} className="rounded-lg border p-4">
                                     <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-semibold">{record.serviceType}</h4>
-                                        <Badge variant="outline">{new Date(record.date).toLocaleDateString()}</Badge>
+                                        <h4 className="font-semibold">{record.purpose?.name || "Check-up"}</h4>
+                                        <Badge variant="outline">{new Date(record.visitDate).toLocaleDateString()}</Badge>
                                     </div>
                                     <p className="text-sm text-muted-foreground mb-2">Notes: {record.notes || "None"}</p>
                                     <p className="text-xs text-muted-foreground">Status: {record.status}</p>
@@ -119,40 +121,7 @@ export default async function PatientProfilePage(props: { params: Promise<{ id: 
             </Card>
 
             <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <Syringe className="h-5 w-5 text-primary" />
-                            <CardTitle>Vaccinations</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {pet.vaccinations.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No vaccinations recorded.</p>
-                        ) : (
-                            <div className="space-y-4">
-                                {pet.vaccinations.map((vac, i) => (
-                                    <div key={i} className="flex justify-between items-center border-b pb-2 last:border-0">
-                                        <div>
-                                            <p className="font-medium">{vac.name}</p>
-                                            <p className="text-xs text-muted-foreground">Given: {new Date(vac.dateGiven).toLocaleDateString()}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xs text-muted-foreground">Due:</p>
-                                            {vac.nextDueDate ? (
-                                                <Badge variant="secondary">{new Date(vac.nextDueDate).toLocaleDateString()}</Badge>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground">N/A</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
+                <Card className="col-span-2">
                     <CardHeader>
                         <div className="flex items-center gap-2">
                             <Pill className="h-5 w-5 text-primary" />
@@ -160,24 +129,21 @@ export default async function PatientProfilePage(props: { params: Promise<{ id: 
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {pet.prescriptions.length === 0 ? (
+                        {allPrescriptions.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No prescriptions recorded.</p>
                         ) : (
                             <div className="space-y-4">
-                                {pet.prescriptions.map((rx, i) => (
+                                {allPrescriptions.map((rx, i) => (
                                     <div key={i} className="flex flex-col border-b pb-2 last:border-0">
                                         <div className="flex justify-between items-start">
-                                            <p className="font-medium text-sm">{rx.medicine}</p>
-                                            <Badge variant={rx.status === "Active" ? "default" : "secondary"}>
-                                                {rx.status}
-                                            </Badge>
+                                            <p className="font-medium text-sm">{rx.medicationName}</p>
                                         </div>
                                         <p className="text-xs text-muted-foreground mt-1">Dosage: {rx.dosage}</p>
                                         {rx.instructions && (
                                             <p className="text-xs text-muted-foreground mt-1 break-words">Instructions: {rx.instructions}</p>
                                         )}
                                         <p className="text-[10px] text-muted-foreground mt-2">
-                                            Issued: {new Date(rx.issuedDate).toLocaleDateString()}
+                                            Issued: {new Date(rx.prescriptionDate).toLocaleDateString()}
                                         </p>
                                     </div>
                                 ))}

@@ -30,7 +30,7 @@ export async function resetPassword(formData: FormData) {
 
         const passwordHash = await bcrypt.hash(newPassword, 10);
 
-        await prisma.user.update({
+        await prisma.staff.update({
             where: { email },
             data: { passwordHash }
         });

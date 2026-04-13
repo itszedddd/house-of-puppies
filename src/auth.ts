@@ -9,25 +9,26 @@ export const authConfig = {
         CredentialsProvider({
             name: "Credentials",
             credentials: {
-                email: { label: "Email", type: "email" },
+                username: { label: "Username", type: "text" },
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) {
+                if (!credentials?.username || !credentials?.password) {
                     return null;
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: credentials.email as string },
+                const staff = await prisma.staff.findUnique({
+                    where: { username: credentials.username as string },
+                    include: { role: true },
                 });
 
-                if (!user) {
+                if (!staff) {
                     return null;
                 }
 
                 const isPasswordValid = await bcrypt.compare(
                     credentials.password as string,
-                    user.passwordHash
+                    staff.passwordHash
                 );
 
                 if (!isPasswordValid) {
@@ -35,10 +36,10 @@ export const authConfig = {
                 }
 
                 return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
+                    id: staff.id,
+                    name: staff.fullName,
+                    username: staff.username,
+                    role: staff.role.name,
                 };
             },
         }),

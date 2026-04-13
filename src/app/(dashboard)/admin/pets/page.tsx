@@ -8,11 +8,11 @@ export const dynamic = "force-dynamic";
 export default async function AdminPetsPage() {
     const pets = await prisma.pet.findMany({
         orderBy: { createdAt: "desc" },
-        include: { client: true, records: { orderBy: { date: 'desc' }, take: 1 } }
+        include: { owner: true, records: { orderBy: { visitDate: 'desc' }, take: 1, include: { purpose: true } } }
     });
 
-    const clients = await prisma.client.findMany({
-        orderBy: { name: 'asc' }
+    const clients = await prisma.petOwner.findMany({
+        orderBy: { firstName: 'asc' }
     });
 
     return (
@@ -47,21 +47,21 @@ export default async function AdminPetsPage() {
                                         </td>
                                     </tr>
                                 )}
-                                {pets.map((pet) => {
-                                    const status = pet.records[0]?.status || 'pending';
+                                {pets.map((pet: any) => {
+                                    const status = pet.records[0]?.status || 'Pending';
                                     return (
                                         <tr key={pet.id} className="border-b transition-colors hover:bg-muted/50">
                                             <td className="p-4 align-middle font-mono text-xs">{pet.id.slice(-8)}</td>
                                             <td className="p-4 align-middle font-medium">{pet.name}</td>
                                             <td className="p-4 align-middle text-muted-foreground">
-                                                {pet.client.name}
+                                                {pet.owner.firstName} {pet.owner.lastName}
                                             </td>
                                             <td className="p-4 align-middle text-muted-foreground">
                                                 {pet.species} {pet.breed ? `(${pet.breed})` : ''}
                                             </td>
                                             <td className="p-4 align-middle">
                                                 <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold
-                                                ${status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}
+                                                ${status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}
                                             `}>
                                                     {status}
                                                 </span>

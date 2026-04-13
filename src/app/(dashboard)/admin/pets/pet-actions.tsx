@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { updatePet, deletePet } from "@/app/actions/pets";
@@ -70,6 +71,26 @@ export default function PetActions({ pet }: { pet: any }) {
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="age" className="text-right">Age (yrs)</Label>
                                 <Input id="age" name="age" type="number" defaultValue={pet.age} className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="status" className="text-right">Status</Label>
+                                <div className="col-span-3">
+                                    <Select name="status" defaultValue={pet.records?.[0]?.status || "Pending"}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Pending">Scheduled</SelectItem>
+                                            <SelectItem value="Shower">Shower</SelectItem>
+                                            <SelectItem value="Trimming Nails">Trimming Nails</SelectItem>
+                                            <SelectItem value="Washing">Washing</SelectItem>
+                                            <SelectItem value="Grooming">Grooming</SelectItem>
+                                            <SelectItem value="Ready">Ready</SelectItem>
+                                            <SelectItem value="Completed">Completed</SelectItem>
+                                            <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="notes" className="text-right">Notes</Label>

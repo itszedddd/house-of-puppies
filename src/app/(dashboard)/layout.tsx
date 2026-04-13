@@ -11,8 +11,8 @@ export default function DashboardLayout({
     return (
         <div className="flex min-h-screen flex-col md:flex-row">
             <aside className="w-full border-r bg-muted/40 md:w-64">
-                <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                    <Link href="/" className="flex items-center gap-2 font-semibold">
+                <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 select-none cursor-default">
+                    <Link href="/admin" className="flex items-center gap-2 font-semibold">
                         <LayoutDashboard className="h-6 w-6 text-primary" />
                         <span className="">House of Puppies</span>
                     </Link>
@@ -72,7 +72,7 @@ export default function DashboardLayout({
                         className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary pl-8"
                     >
                         <Users className="h-4 w-4" />
-                        Manage Clients
+                        Manage Pet Owners
                     </Link>
                     <Link
                         href="/admin/pets"
@@ -87,13 +87,6 @@ export default function DashboardLayout({
                     >
                         <CalendarCheck className="h-4 w-4" />
                         Manage Records
-                    </Link>
-                    <Link
-                        href="/client"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <User className="h-4 w-4" />
-                        Client View
                     </Link>
                 </nav>
                 <div className="mt-auto p-4">

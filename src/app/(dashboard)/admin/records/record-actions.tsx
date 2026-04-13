@@ -71,20 +71,20 @@ export default function RecordActions({ record }: { record: any }) {
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="status" className="text-right">Status</Label>
                                 <div className="col-span-3">
-                                    <Select name="status" defaultValue={record.status}>
+                                    <Select name="status" defaultValue={record.status || "Pending"}>
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                                            <SelectItem value="Pending">Scheduled</SelectItem>
                                             <SelectItem value="Shower">Shower</SelectItem>
                                             <SelectItem value="Trimming Nails">Trimming Nails</SelectItem>
                                             <SelectItem value="Washing">Washing</SelectItem>
                                             <SelectItem value="Grooming">Grooming</SelectItem>
                                             <SelectItem value="In Consultation">In Consultation</SelectItem>
                                             <SelectItem value="Ready">Ready</SelectItem>
-                                            <SelectItem value="completed">Completed</SelectItem>
-                                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                                            <SelectItem value="Completed">Completed</SelectItem>
+                                            <SelectItem value="Cancelled">Cancelled</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

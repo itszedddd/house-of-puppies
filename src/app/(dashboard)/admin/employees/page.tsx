@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 export const dynamic = "force-dynamic";
 
 export default async function AdminEmployeesPage() {
-    const employees = await prisma.user.findMany({
-        orderBy: { createdAt: "desc" }
+    const employees = await prisma.staff.findMany({
+        orderBy: { createdAt: "desc" },
+        include: { role: true }
     });
 
     return (
@@ -42,13 +43,13 @@ export default async function AdminEmployeesPage() {
                                         </td>
                                     </tr>
                                 )}
-                                {employees.map((employee) => (
+                                {employees.map((employee: any) => (
                                     <tr key={employee.id} className="border-b transition-colors hover:bg-muted/50">
-                                        <td className="p-4 align-middle font-medium">{employee.name || "N/A"}</td>
-                                        <td className="p-4 align-middle text-muted-foreground">{employee.email}</td>
+                                        <td className="p-4 align-middle font-medium">{employee.fullName || "N/A"}</td>
+                                        <td className="p-4 align-middle text-muted-foreground">{employee.username}</td>
                                         <td className="p-4 align-middle">
-                                            <Badge variant={employee.role === "admin" ? "default" : "secondary"}>
-                                                {employee.role}
+                                            <Badge variant={employee.role?.name === "vet_admin" ? "default" : "secondary"}>
+                                                {employee.role?.name}
                                             </Badge>
                                         </td>
                                         <td className="p-4 align-middle text-muted-foreground">

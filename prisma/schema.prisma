@@ -10,89 +10,151 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  passwordHash  String
-  role          String    @default("admin") // e.g. "admin", "staff"
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model Staff {
+  id           String        @id @default(cuid())
+  fullName     String
+  username     String        @unique
+  passwordHash String
+  roleId       String
+  role         Role          @relation(fields: [roleId], references: [id])
+  records      ClinicalRecord[]
+  prescriptions PrescriptionRecord[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
-model Client {
+model Role {
+  id      String  @id @default(cuid())
+  name    String  @unique // "staff", "vet_admin", "owner"
+  staffs  Staff[]
+}
+
+model PetOwner {
   id            String    @id @default(cuid())
-  name          String
-  phone         String?
+  firstName     String
+  lastName      String
+  contactNumber String?
   email         String?
   address       String?
+  pets          Pet[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  pets          Pet[]
 }
 
 model Pet {
-  id            String    @id @default(cuid())
-  name          String
-  breed         String?
-  species       String?   // "Dog", "Cat", etc.
-  age           Int?
-  notes         String?
-  clientId      String
-  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  records       Record[]
-  vaccinations  Vaccination[]
-  prescriptions Prescription[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  ownerId     String
+  owner       PetOwner  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  species     String?
+  breed       String?
+  gender      String?
+  dateOfBirth String?
+  forms       Form[]
+  records     ClinicalRecord[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
-model Vaccination {
-  id            String    @id @default(cuid())
+model PurposeOfVisit {
+  id      String           @id @default(cuid())
+  name    String           @unique // "grooming", "check_up", "surgery", "lab_test"
+  records ClinicalRecord[]
+}
+
+model ClinicalRecord {
+  id            String         @id @default(cuid())
   petId         String
-  pet           Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
-  name          String
-  dateGiven     DateTime
-  nextDueDate   DateTime?
+  pet           Pet            @relation(fields: [petId], references: [id], onDelete: Cascade)
+  visitDate     DateTime
+  purposeId     String
+  purpose       PurposeOfVisit @relation(fields: [purposeId], references: [id])
+  status        String         @default("Pending") // Added for dashboard workflow
   notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  diagnosis     String?
+  treatment     String?
+  createdById   String
+  createdBy     Staff          @relation(fields: [createdById], references: [id])
+  prescriptions PrescriptionRecord[]
+  reminders     SmsReminder[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
-model InventoryItem {
-  id            String    @id @default(cuid())
-  name          String
-  category      String
-  stock         Int       @default(0)
-  unit          String
-  expiryDate    DateTime?
-  status        String    @default("Ok") // "Ok", "Low", "Out of Stock"
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model PrescriptionRecord {
+  id               String         @id @default(cuid())
+  recordId         String
+  record           ClinicalRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  createdById      String
+  createdBy        Staff          @relation(fields: [createdById], references: [id])
+  prescriptionDate DateTime       @default(now())
+  medicationName   String
+  dosage           String
+  duration         String?        // ERD says "time" but duration usually varchar/string
+  instructions     String?
+  exportedPdfLink  String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
-model Record {
-  id            String    @id @default(cuid())
-  petId         String
-  pet           Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
-  serviceType   String    // e.g. "Full Groom", "Bath & Brush"
-  date          DateTime
-  price         Float?
-  status        String    @default("scheduled") // "scheduled", "completed", "cancelled"
-  notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model ReminderType {
+  id        String        @id @default(cuid())
+  name      String        @unique // "follow_up", "vaccination_due", "lab_test_sched", "grooming"
+  reminders SmsReminder[]
 }
 
-model Prescription {
-  id            String    @id @default(cuid())
-  petId         String
-  pet           Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
-  medicine      String
-  dosage        String
-  instructions  String?
-  status        String    @default("Active") // "Active", "Completed", "Cancelled"
-  issuedDate    DateTime  @default(now())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model SmsStatus {
+  id        String        @id @default(cuid())
+  name      String        @unique // "sent", "pending", "failed"
+  reminders SmsReminder[]
+}
+
+model SmsReminder {
+  id             String         @id @default(cuid())
+  recordId       String
+  record         ClinicalRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  reminderTypeId String
+  reminderType   ReminderType   @relation(fields: [reminderTypeId], references: [id])
+  reminderDate   DateTime
+  smsStatusId    String
+  smsStatus      SmsStatus      @relation(fields: [smsStatusId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model FormType {
+  id    String @id @default(cuid())
+  name  String @unique // "waiver_lab_test", "sedation_grooming", "surgery_consent"
+  forms Form[]
+}
+
+model Form {
+  id           String   @id @default(cuid())
+  petId        String
+  pet          Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  formTypeId   String
+  formType     FormType @relation(fields: [formTypeId], references: [id])
+  formDate     DateTime @default(now())
+  formFileLink String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ItemType {
+  id        String      @id @default(cuid())
+  name      String      @unique // "medication", "grooming", "lab_supply"
+  inventory Inventory[]
+}
+
+model Inventory {
+  id         String   @id @default(cuid())
+  itemName   String
+  itemTypeId String
+  itemType   ItemType @relation(fields: [itemTypeId], references: [id])
+  stock      Int      @default(0) // Added stock as it's implied for inventory
+  unit       String?  @default("pcs")
+  expiryDate DateTime?
+  status     String?  @default("Ok")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

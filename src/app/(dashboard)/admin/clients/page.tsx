@@ -6,7 +6,7 @@ import ClientActions from "./client-actions";
 export const dynamic = "force-dynamic";
 
 export default async function AdminClientsPage() {
-    const clients = await prisma.client.findMany({
+    const clients = await prisma.petOwner.findMany({
         orderBy: { createdAt: "desc" },
         include: { pets: true }
     });
@@ -43,14 +43,14 @@ export default async function AdminClientsPage() {
                                         </td>
                                     </tr>
                                 )}
-                                {clients.map((client) => (
+                                {clients.map((client: any) => (
                                     <tr key={client.id} className="border-b transition-colors hover:bg-muted/50">
                                         <td className="p-4 align-middle font-mono text-xs">{client.id}</td>
-                                        <td className="p-4 align-middle font-medium">{client.name}</td>
+                                        <td className="p-4 align-middle font-medium">{client.firstName} {client.lastName}</td>
                                         <td className="p-4 align-middle text-muted-foreground">
-                                            {client.phone && <div>{client.phone}</div>}
+                                            {client.contactNumber && <div>{client.contactNumber}</div>}
                                             {client.email && <div>{client.email}</div>}
-                                            {!client.phone && !client.email && <span>-</span>}
+                                            {!client.contactNumber && !client.email && <span>-</span>}
                                         </td>
                                         <td className="p-4 align-middle">
                                             <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">

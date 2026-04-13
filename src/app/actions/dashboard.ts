@@ -2,9 +2,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function getDashboardStats() {
     const [clientCount, petCount, recordCount] = await Promise.all([
-        prisma.client.count(),
+        prisma.petOwner.count(),
         prisma.pet.count(),
-        prisma.record.count()
+        prisma.clinicalRecord.count()
     ]);
 
     return {
@@ -15,7 +15,7 @@ export async function getDashboardStats() {
 }
 
 export async function getRecentClients() {
-    return prisma.client.findMany({
+    return prisma.petOwner.findMany({
         take: 5,
         orderBy: { createdAt: "desc" },
         include: { pets: true }

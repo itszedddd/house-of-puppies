@@ -1,12 +1,11 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { ShoppingBag, User } from "lucide-react";
 
 export function Navbar() {
     return (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 select-none cursor-default">
             <div className="container flex h-16 items-center justify-between">
                 <div className="mr-4 hidden md:flex">
                     <Link href="/" className="mr-6 flex items-center space-x-2">
@@ -49,16 +48,16 @@ export function Navbar() {
                     </div>
                     <nav className="flex items-center space-x-2">
                         <ModeToggle />
-                        <Button variant="ghost" size="icon" asChild>
+                        <Button variant="ghost" size="icon" asChild title="Check Pet Status">
                             <Link href="/client">
                                 <ShoppingBag className="h-5 w-5" />
-                                <span className="sr-only">Client</span>
+                                <span className="sr-only">Client Pet Status</span>
                             </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link href="/employee">
-                                <User className="h-5 w-5" />
-                                <span className="sr-only">Employee</span>
+                        <Button variant="default" size="sm" asChild className="ml-2">
+                            <Link href="/login" className="flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                <span>Staff Login</span>
                             </Link>
                         </Button>
                     </nav>

@@ -84,6 +84,7 @@ export async function updatePet(id: string, data: FormData) {
     const ageString = data.get("age") as string;
     const age = ageString ? parseInt(ageString, 10) : null;
     const notes = (data.get("notes") as string) || null;
+    const status = data.get("status") as string;
 
     if (!name) return { error: "Name is required" };
 
@@ -92,6 +93,22 @@ export async function updatePet(id: string, data: FormData) {
             where: { id },
             data: { name, breed, species, age, notes }
         });
+
+        // If a status was supplied via the admin edit form, aggressively update the pet's latest record.
+        if (status) {
+            const latestRecord = await prisma.record.findFirst({
+                where: { petId: id },
+                orderBy: { date: "desc" }
+            });
+
+            if (latestRecord) {
+                await prisma.record.update({
+                    where: { id: latestRecord.id },
+                    data: { status }
+                });
+            }
+        }
+
         revalidatePath("/admin/pets");
         revalidatePath("/admin");
         return { success: true };
