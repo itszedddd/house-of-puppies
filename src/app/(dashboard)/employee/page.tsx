@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EmployeePage() {
     const session = await auth();
-    if (!session?.user || !["staff_records", "vet_admin"].includes((session.user as any).role)) {
+    const userRole = (session?.user as any)?.role;
+    if (!session?.user || !["staff_records", "vet_admin"].includes(userRole)) {
         redirect("/login");
     }
 
@@ -66,7 +67,9 @@ export default async function EmployeePage() {
                     <p className="text-muted-foreground text-sm">Register arrivals, manage clients & pets, and record initial clinical vitals.</p>
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
-                    <StaffIntakeForm pets={pets} clients={clients} />
+                    {userRole === "staff_records" && (
+                        <StaffIntakeForm pets={pets} clients={clients} />
+                    )}
                 </div>
             </div>
 

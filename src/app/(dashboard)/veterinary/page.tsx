@@ -21,6 +21,7 @@ export default async function VeterinaryPage() {
 
     let pets: any[] = [];
     let recentRecords: any[] = [];
+    let medicationsInventory: any[] = [];
     try {
         pets = await prisma.pet.findMany({
             include: {
@@ -42,6 +43,11 @@ export default async function VeterinaryPage() {
                 purpose: true,
                 prescriptions: true,
             }
+        });
+
+        medicationsInventory = await prisma.inventory.findMany({
+            where: { itemType: { name: "medication" } },
+            orderBy: { itemName: "asc" }
         });
     } catch (e) {
         console.error("[DB] VeterinaryPage failed:", e);
@@ -101,7 +107,7 @@ export default async function VeterinaryPage() {
                     <CardDescription>Patients forwarded by Staff waiting for examination.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-4 overflow-x-hidden">
                         {vetPets.length === 0 ? (
                             <p className="text-center text-muted-foreground py-4">No patients are currently waiting.</p>
                         ) : (
@@ -110,7 +116,7 @@ export default async function VeterinaryPage() {
                                     key={pet.id}
                                     className="flex flex-col gap-2 border-b pb-4 last:border-0 last:pb-0"
                                 >
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-wrap items-center justify-between gap-4">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                                                 <Stethoscope className="h-5 w-5 text-primary" />
@@ -124,7 +130,7 @@ export default async function VeterinaryPage() {
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 mt-2 md:mt-0 self-end md:self-auto flex-wrap justify-end">
                                             <Badge variant="outline">
                                                 {pet.status}
                                             </Badge>
@@ -133,6 +139,7 @@ export default async function VeterinaryPage() {
                                                     recordId={pet.record.id} 
                                                     petName={pet.name} 
                                                     intakeData={pet.record}
+                                                    medications={medicationsInventory}
                                                 />
                                             )}
                                         </div>
@@ -155,17 +162,18 @@ export default async function VeterinaryPage() {
                     <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Recent Records</CardTitle>
                     <CardDescription>Completed clinical records. You can edit records and manage prescriptions.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <Table>
+                <CardContent className="p-0 sm:p-6">
+                    <div className="w-full overflow-x-auto rounded-md border">
+                        <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Date</TableHead>
+                                <TableHead className="w-[80px]">Date</TableHead>
                                 <TableHead>Patient</TableHead>
-                                <TableHead>Owner</TableHead>
-                                <TableHead>Purpose</TableHead>
-                                <TableHead>Diagnosis</TableHead>
-                                <TableHead>Bill (₱)</TableHead>
-                                <TableHead>Prescriptions</TableHead>
+                                <TableHead className="hidden md:table-cell">Owner</TableHead>
+                                <TableHead className="hidden lg:table-cell">Purpose</TableHead>
+                                <TableHead className="max-w-[150px]">Diagnosis</TableHead>
+                                <TableHead>Bill</TableHead>
+                                <TableHead className="hidden sm:table-cell">Prescriptions</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -178,19 +186,19 @@ export default async function VeterinaryPage() {
                                 recentRecords.map((record: any) => (
                                     <TableRow key={record.id}>
                                         <TableCell className="text-xs font-mono whitespace-nowrap">{new Date(record.visitDate).toLocaleDateString()}</TableCell>
-                                        <TableCell className="font-medium">{record.pet?.name} <span className="text-muted-foreground text-xs">({record.pet?.breed || "N/A"})</span></TableCell>
-                                        <TableCell className="text-xs">{record.pet?.owner ? `${record.pet.owner.firstName} ${record.pet.owner.lastName}` : "—"}</TableCell>
-                                        <TableCell><Badge variant="secondary" className="text-[10px]">{record.purpose?.name || "—"}</Badge></TableCell>
-                                        <TableCell className="max-w-[200px] truncate text-xs">{record.diagnosis || "—"}</TableCell>
-                                        <TableCell className="font-bold">₱{record.price?.toFixed(2) || "0.00"}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="font-medium text-xs md:text-sm">{record.pet?.name} <span className="text-muted-foreground text-[10px] md:text-xs">({record.pet?.breed || "N/A"})</span></TableCell>
+                                        <TableCell className="text-xs hidden md:table-cell">{record.pet?.owner ? `${record.pet.owner.firstName} ${record.pet.owner.lastName}` : "—"}</TableCell>
+                                        <TableCell className="hidden lg:table-cell"><Badge variant="secondary" className="text-[10px]">{record.purpose?.name || "—"}</Badge></TableCell>
+                                        <TableCell className="max-w-[120px] md:max-w-[150px] truncate text-xs" title={record.diagnosis}>{record.diagnosis || "—"}</TableCell>
+                                        <TableCell className="font-bold text-xs">₱{record.price?.toFixed(2) || "0.00"}</TableCell>
+                                        <TableCell className="hidden sm:table-cell">
                                             {record.prescriptions && record.prescriptions.length > 0 ? (
                                                 <div className="space-y-1">
                                                     {record.prescriptions.map((rx: any) => (
-                                                        <div key={rx.id} className="flex items-center gap-1">
-                                                            <Pill className="h-3 w-3 text-primary" />
-                                                            <span className="text-xs font-medium truncate max-w-[120px]">{rx.medicationName}</span>
-                                                            <span className="text-[10px] text-muted-foreground">({rx.dosage})</span>
+                                                        <div key={rx.id} className="flex flex-wrap items-center gap-1">
+                                                            <Pill className="h-3 w-3 text-primary shrink-0" />
+                                                            <span className="text-[10px] md:text-xs font-medium truncate max-w-[80px] md:max-w-[100px]">{rx.medicationName}</span>
+                                                            <span className="text-[9px] text-muted-foreground whitespace-nowrap">({rx.dosage})</span>
                                                             <EditPrescriptionForm
                                                                 prescriptionId={rx.id}
                                                                 petName={record.pet?.name || "Patient"}
@@ -199,6 +207,7 @@ export default async function VeterinaryPage() {
                                                                     dosage: rx.dosage,
                                                                     instructions: rx.instructions,
                                                                 }}
+                                                                medications={medicationsInventory}
                                                             />
                                                         </div>
                                                     ))}
@@ -208,7 +217,7 @@ export default async function VeterinaryPage() {
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-1">
+                                            <div className="flex flex-wrap items-center justify-end gap-1">
                                                 <EditRecordForm
                                                     recordId={record.id}
                                                     petName={record.pet?.name || "Patient"}
@@ -237,6 +246,7 @@ export default async function VeterinaryPage() {
                             )}
                         </TableBody>
                     </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

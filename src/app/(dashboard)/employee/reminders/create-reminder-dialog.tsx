@@ -22,6 +22,8 @@ const SMS_TEMPLATES: Record<string, string> = {
         "Hello {ownerName}, this is a reminder that {petName}'s lab test results are expected on {date}. Please visit House of Puppies to pick them up. Thank you!",
     grooming:
         "Hi {ownerName}! {petName}'s next grooming appointment is on {date}. We look forward to pampering {petName} at House of Puppies! See you then!",
+    grooming_done:
+        "Hi {ownerName}! Tapos na yung grooming or Grooming Finished for {petName} at House of Puppies. You can pick them up now! Thank you!",
 };
 
 function generateMessage(templateKey: string, ownerName: string, petName: string, dateStr: string): string {
@@ -179,6 +181,7 @@ export function CreateReminderDialog({ records, types }: { records: any[], types
                                          t.name === "vaccination_due" ? "💉 Vaccination Due" :
                                          t.name === "lab_test_sched" ? "🧪 Lab Test Schedule" :
                                          t.name === "grooming" ? "✂️ Grooming Appointment" :
+                                         t.name === "grooming_done" ? "🛁 Grooming Done / Finished" :
                                          t.name.replace("_", " ")}
                                     </SelectItem>
                                 ))}

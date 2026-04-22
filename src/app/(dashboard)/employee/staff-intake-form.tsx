@@ -56,75 +56,65 @@ export default function StaffIntakeForm({ pets, clients }: { pets: any[]; client
     const [petError, setPetError] = useState("");
     const [petSuccess, setPetSuccess] = useState("");
 
-    async function handleAddClient() {
-        setClientLoading(true);
-        setClientError("");
-        setClientSuccess("");
-        if (!clientName.trim()) {
-            setClientError("Name is required.");
-            setClientLoading(false);
-            return;
-        }
-        const formData = new FormData();
-        formData.append("name", clientName.trim());
-        if (clientPhone) formData.append("phone", clientPhone);
-        if (clientEmail) formData.append("email", clientEmail);
-        if (clientAddress) formData.append("address", clientAddress);
-
-        const result = await createClient(formData);
-        if (result.error) {
-            setClientError(result.error);
-        } else {
-            setClientSuccess(`Client "${clientName}" added! Refresh to see them in the pet owner list.`);
-            setClientName("");
-            setClientPhone("");
-            setClientEmail("");
-            setClientAddress("");
-        }
-        setClientLoading(false);
-    }
-
-    async function handleAddPet() {
-        setPetLoading(true);
-        setPetError("");
-        setPetSuccess("");
-        if (!petName.trim() || !petOwnerId) {
-            setPetError("Pet name and owner are required.");
-            setPetLoading(false);
-            return;
-        }
-        const formData = new FormData();
-        formData.append("name", petName.trim());
-        formData.append("clientId", petOwnerId);
-        if (petSpecies) formData.append("species", petSpecies);
-        if (petBreed) formData.append("breed", petBreed);
-        if (petAge) formData.append("age", petAge);
-
-        const result = await createPet(formData);
-        if (result.error) {
-            setPetError(result.error);
-        } else {
-            setPetSuccess(`Pet "${petName}" registered! Refresh to see them in the patient list.`);
-            setPetName("");
-            setPetSpecies("");
-            setPetBreed("");
-            setPetAge("");
-            setPetOwnerId("");
-        }
-        setPetLoading(false);
-    }
-
     async function action(formData: FormData) {
         setIsLoading(true);
         setError("");
 
-        if (!selectedPetId) {
-            setError("Please select a pet.");
+        let finalPetId = selectedPetId;
+
+        // 1. Auto-save Client if filled
+        let generatedClientId = petOwnerId;
+        if (showAddClient && clientName.trim()) {
+            const clientData = new FormData();
+            clientData.append("name", clientName.trim());
+            if (clientPhone) clientData.append("phone", clientPhone);
+            if (clientEmail) clientData.append("email", clientEmail);
+            if (clientAddress) clientData.append("address", clientAddress);
+            
+            const cResult = await createClient(clientData);
+            if (cResult.error) {
+                setError("Error saving new client: " + cResult.error);
+                setIsLoading(false);
+                return;
+            }
+            if (cResult.newClientId) {
+                generatedClientId = cResult.newClientId;
+            }
+        }
+
+        // 2. Auto-save Pet if filled
+        if (showAddPet && petName.trim()) {
+            const targetClientId = generatedClientId || petOwnerId;
+            if (!targetClientId) {
+               setError("Please select an owner or create a new client for the pet.");
+               setIsLoading(false);
+               return;
+            }
+            const pData = new FormData();
+            pData.append("name", petName.trim());
+            pData.append("clientId", targetClientId);
+            if (petSpecies) pData.append("species", petSpecies);
+            if (petBreed) pData.append("breed", petBreed);
+            if (petAge) pData.append("age", petAge);
+
+            const pResult = await createPet(pData);
+            if (pResult.error) {
+                setError("Error saving new pet: " + pResult.error);
+                setIsLoading(false);
+                return;
+            }
+            if (pResult.newPetId) {
+                finalPetId = pResult.newPetId;
+            }
+        }
+
+        if (!finalPetId) {
+            setError("Please select a pet patient from the list or register a new one.");
             setIsLoading(false);
             return;
         }
 
-        formData.append("petId", selectedPetId);
+        formData.append("petId", finalPetId);
         const result = await submitStaffIntake(formData);
 
         if (result?.error) {
@@ -133,6 +123,17 @@ export default function StaffIntakeForm({ pets, clients }: { pets: any[]; client
             setOpen(false);
             setSelectedPetId("");
             setPurpose("");
+            setClientName("");
+            setClientPhone("");
+            setClientEmail("");
+            setClientAddress("");
+            setPetName("");
+            setPetSpecies("");
+            setPetBreed("");
+            setPetAge("");
+            setPetOwnerId("");
+            setShowAddClient(false);
+            setShowAddPet(false);
         }
         setIsLoading(false);
     }
@@ -197,9 +198,9 @@ export default function StaffIntakeForm({ pets, clients }: { pets: any[]; client
                                         <Input value={clientAddress} onChange={e => setClientAddress(e.target.value)} placeholder="Subdivision, City" className="h-8 text-sm" />
                                     </div>
                                 </div>
-                                <Button type="button" size="sm" onClick={handleAddClient} disabled={clientLoading} className="w-full">
-                                    {clientLoading ? "Saving..." : "Save Client"}
-                                </Button>
+                                <div className="text-xs text-muted-foreground italic text-center bg-background/50 py-2 rounded-md">
+                                    *(Client will be saved automatically when forwarding to Vet)*
+                                </div>
                             </div>
                         )}
                     </div>
@@ -220,30 +221,36 @@ export default function StaffIntakeForm({ pets, clients }: { pets: any[]; client
                                 {petSuccess && <div className="text-sm text-green-700 dark:text-green-400 font-medium bg-green-50 dark:bg-green-950/30 p-2 rounded">{petSuccess}</div>}
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold">Owner *</Label>
-                                    <Popover open={ownerComboOpen} onOpenChange={setOwnerComboOpen}>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="outline" role="combobox" className="w-full justify-between text-sm h-8">
-                                                {petOwnerId ? clients.find(c => c.id === petOwnerId)?.name : "Select owner..."}
-                                                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[300px] p-0 z-[100]">
-                                            <Command>
-                                                <CommandInput placeholder="Search owner..." />
-                                                <CommandList>
-                                                    <CommandEmpty>No owner found. Register one first.</CommandEmpty>
-                                                    <CommandGroup>
-                                                        {clients.map(c => (
-                                                            <CommandItem key={c.id} value={c.name} onSelect={() => { setPetOwnerId(c.id); setOwnerComboOpen(false); }}>
-                                                                <Check className={cn("mr-2 h-4 w-4", petOwnerId === c.id ? "opacity-100" : "opacity-0")} />
-                                                                {c.name}
-                                                            </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
-                                                </CommandList>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
+                                    {showAddClient && clientName.trim().length > 0 ? (
+                                        <div className="h-8 flex items-center px-3 border rounded-md bg-muted text-sm text-muted-foreground">
+                                            {clientName} (New Client)
+                                        </div>
+                                    ) : (
+                                        <Popover open={ownerComboOpen} onOpenChange={setOwnerComboOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" role="combobox" className="w-full justify-between text-sm h-8">
+                                                    {petOwnerId ? clients.find(c => c.id === petOwnerId)?.name : "Select owner..."}
+                                                    <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[300px] p-0 z-[100]">
+                                                <Command>
+                                                    <CommandInput placeholder="Search owner..." />
+                                                    <CommandList>
+                                                        <CommandEmpty>No owner found. Register one first.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            {clients.map(c => (
+                                                                <CommandItem key={c.id} value={c.name} onSelect={() => { setPetOwnerId(c.id); setOwnerComboOpen(false); }}>
+                                                                    <Check className={cn("mr-2 h-4 w-4", petOwnerId === c.id ? "opacity-100" : "opacity-0")} />
+                                                                    {c.name}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                    )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1">
@@ -263,9 +270,9 @@ export default function StaffIntakeForm({ pets, clients }: { pets: any[]; client
                                         <Input value={petAge} onChange={e => setPetAge(e.target.value)} placeholder="2" className="h-8 text-sm" />
                                     </div>
                                 </div>
-                                <Button type="button" size="sm" onClick={handleAddPet} disabled={petLoading} className="w-full">
-                                    {petLoading ? "Saving..." : "Save Pet"}
-                                </Button>
+                                <div className="text-xs text-muted-foreground italic text-center bg-background/50 py-2 rounded-md">
+                                    *(Pet will be saved automatically when forwarding to Vet)*
+                                </div>
                             </div>
                         )}
                     </div>
@@ -278,52 +285,58 @@ export default function StaffIntakeForm({ pets, clients }: { pets: any[]; client
                                 <Label htmlFor="petId" className="text-sm font-bold flex items-center gap-1">
                                     Patient (Pet) <span className="text-destructive">*</span>
                                 </Label>
-                                <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            aria-expanded={comboboxOpen}
-                                            className="w-full justify-between border-primary/20 hover:border-primary/40"
-                                        >
-                                            {selectedPet
-                                                ? `${selectedPet.name} (${selectedPet.owner?.firstName} ${selectedPet.owner?.lastName})`
-                                                : "Search patient list..."}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[300px] p-0 z-[100]">
-                                        <Command>
-                                            <CommandInput placeholder="Search name or owner..." />
-                                            <CommandList>
-                                                <CommandEmpty>No patient found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {pets.map((pet) => (
-                                                        <CommandItem
-                                                            key={pet.id}
-                                                            value={`${pet.name} ${pet.owner?.firstName} ${pet.owner?.lastName}`}
-                                                            onSelect={() => {
-                                                                setSelectedPetId(pet.id);
-                                                                setComboboxOpen(false);
-                                                            }}
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    "mr-2 h-4 w-4 text-primary",
-                                                                    selectedPetId === pet.id ? "opacity-100" : "opacity-0"
-                                                                )}
-                                                            />
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold">{pet.name}</span>
-                                                                <span className="text-xs text-muted-foreground">Owner: {pet.owner?.firstName} {pet.owner?.lastName}</span>
-                                                            </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
+                                {showAddPet && petName.trim().length > 0 ? (
+                                    <div className="h-10 flex items-center px-3 border border-primary/20 rounded-md bg-muted text-sm text-primary font-bold">
+                                        {petName} (New Patient)
+                                    </div>
+                                ) : (
+                                    <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={comboboxOpen}
+                                                className="w-full justify-between border-primary/20 hover:border-primary/40"
+                                            >
+                                                {selectedPet
+                                                    ? `${selectedPet.name} (${selectedPet.owner?.firstName} ${selectedPet.owner?.lastName})`
+                                                    : "Search patient list..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[300px] p-0 z-[100]">
+                                            <Command>
+                                                <CommandInput placeholder="Search name or owner..." />
+                                                <CommandList>
+                                                    <CommandEmpty>No patient found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {pets.map((pet) => (
+                                                            <CommandItem
+                                                                key={pet.id}
+                                                                value={`${pet.name} ${pet.owner?.firstName} ${pet.owner?.lastName}`}
+                                                                onSelect={() => {
+                                                                    setSelectedPetId(pet.id);
+                                                                    setComboboxOpen(false);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4 text-primary",
+                                                                        selectedPetId === pet.id ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-bold">{pet.name}</span>
+                                                                    <span className="text-xs text-muted-foreground">Owner: {pet.owner?.firstName} {pet.owner?.lastName}</span>
+                                                                </div>
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -374,11 +387,31 @@ export default function StaffIntakeForm({ pets, clients }: { pets: any[]; client
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase">Stool Consistency/Color</Label>
-                                <Input name="stool" placeholder="Normal, soft, etc." className="h-8 text-xs" />
+                                <Input name="stool" list="stool-suggestions" placeholder="Normal, soft, etc." className="h-8 text-xs" />
+                                <datalist id="stool-suggestions">
+                                    <option value="Normal / Formed" />
+                                    <option value="Soft / Pasty" />
+                                    <option value="Watery / Diarrhea" />
+                                    <option value="Hard / Dry" />
+                                    <option value="Bloody" />
+                                    <option value="Mucoid (Jelly-like)" />
+                                    <option value="Tarry / Black" />
+                                    <option value="Yellow / Orange" />
+                                    <option value="None" />
+                                </datalist>
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase">Urine Consistency/Color</Label>
-                                <Input name="urine" placeholder="Clear, dark, etc." className="h-8 text-xs" />
+                                <Input name="urine" list="urine-suggestions" placeholder="Clear, dark, etc." className="h-8 text-xs" />
+                                <datalist id="urine-suggestions">
+                                    <option value="Normal / Yellow" />
+                                    <option value="Clear / Colorless" />
+                                    <option value="Dark Yellow / Amber" />
+                                    <option value="Bloody / Red" />
+                                    <option value="Cloudy" />
+                                    <option value="Strong odor" />
+                                    <option value="None" />
+                                </datalist>
                             </div>
                         </div>
                     </div>

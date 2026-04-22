@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react";
 import { updatePrescription } from "@/app/actions/prescriptions";
 import { Pencil } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface EditPrescriptionFormProps {
     prescriptionId: string;
@@ -24,12 +25,14 @@ interface EditPrescriptionFormProps {
         dosage: string;
         instructions?: string | null;
     };
+    medications?: any[];
 }
 
-export default function EditPrescriptionForm({ prescriptionId, petName, existingData }: EditPrescriptionFormProps) {
+export default function EditPrescriptionForm({ prescriptionId, petName, existingData, medications = [] }: EditPrescriptionFormProps) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [medicineValue, setMedicineValue] = useState(existingData.medicationName);
 
     async function action(formData: FormData) {
         setIsLoading(true);
@@ -65,7 +68,28 @@ export default function EditPrescriptionForm({ prescriptionId, petName, existing
                     
                     <div className="space-y-2">
                         <Label htmlFor="medicine" className="font-bold text-sm">Medicine Name</Label>
-                        <Input id="medicine" name="medicine" defaultValue={existingData.medicationName} required />
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="medicine" 
+                                name="medicine" 
+                                list="edit-medications-list"
+                                value={medicineValue}
+                                onChange={(e) => setMedicineValue(e.target.value)}
+                                required 
+                            />
+                            {(() => {
+                                const med = medications.find(m => m.itemName?.toLowerCase() === medicineValue?.toLowerCase());
+                                if (med && med.stock <= 5) {
+                                    return <Badge variant="destructive" className="shrink-0 text-[10px] h-6 py-0 flex items-center">Low on stocks ({med.stock})</Badge>;
+                                }
+                                return null;
+                            })()}
+                        </div>
+                        <datalist id="edit-medications-list">
+                            {medications.map(med => (
+                                <option key={med.id} value={med.itemName} />
+                            ))}
+                        </datalist>
                     </div>
 
                     <div className="space-y-2">

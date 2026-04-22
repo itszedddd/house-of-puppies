@@ -47,7 +47,7 @@ export async function createClient(data: FormData) {
         revalidatePath("/admin");
         revalidatePath("/admin/clients");
         revalidatePath("/employee");
-        return { success: true };
+        return { success: true, newClientId: newClient.id };
     } catch (e) {
         return { error: "Failed to create client" };
     }

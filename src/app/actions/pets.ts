@@ -27,7 +27,7 @@ export async function createPet(data: FormData) {
             return { error: `A pet named "${name}" already exists for this owner. Please use a different name or select the existing pet.` };
         }
 
-        await prisma.pet.create({
+        const newPet = await prisma.pet.create({
             data: {
                 name,
                 ownerId,
@@ -41,7 +41,7 @@ export async function createPet(data: FormData) {
         revalidatePath("/admin");
         revalidatePath("/employee");
         revalidatePath("/employee/pets");
-        return { success: true };
+        return { success: true, newPetId: newPet.id };
     } catch (e) {
         console.error(e);
         return { error: "Failed to create pet record" };

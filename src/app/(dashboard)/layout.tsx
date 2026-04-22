@@ -24,17 +24,17 @@ export default async function DashboardLayout({
     const navItems = [
         // Staff Records — intake, clients, pets
         { href: "/employee", label: "Records Dashboard", icon: Briefcase, roles: ["staff_records", "vet_admin"] },
-        { href: "/employee/clients", label: "Clients Directory", icon: Users, roles: ["staff_records", "vet_admin"] },
-        { href: "/employee/pets", label: "Pets Registry", icon: PawPrint, roles: ["staff_records", "vet_admin"] },
+        { href: "/employee/clients", label: "Clients Directory", icon: Users, roles: ["staff_records", "vet_admin", "owner"] },
+        { href: "/employee/pets", label: "Pets Registry", icon: PawPrint, roles: ["staff_records", "vet_admin", "owner"] },
 
         // Veterinarian — examine patients
         { href: "/veterinary", label: "Veterinary", icon: Stethoscope, roles: ["vet_admin"] },
 
         // Staff SMS — AI reminders
-        { href: "/employee/reminders", label: "AI SMS Reminders", icon: MessageSquare, roles: ["staff_sms", "vet_admin"] },
+        { href: "/employee/reminders", label: "AI SMS Reminders", icon: MessageSquare, roles: ["staff_sms"] },
 
         // Staff Inventory
-        { href: "/inventory", label: "Inventory", icon: Pill, roles: ["staff_inventory", "vet_admin"] },
+        { href: "/inventory", label: "Inventory", icon: Pill, roles: ["staff_inventory", "owner"] },
 
         // Owner & Admin — analytics and reports
         { href: "/analytics", label: "Analytics & Sales", icon: TrendingUp, roles: ["owner", "vet_admin"] },

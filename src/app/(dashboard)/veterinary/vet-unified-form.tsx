@@ -15,14 +15,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react";
 import { completeVetRecord } from "@/app/actions/records";
 import { HeartPulse, History, ShieldCheck, FileSignature, Stethoscope, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface VetUnifiedFormProps {
     recordId: string;
     petName: string;
     intakeData?: any;
+    medications?: any[];
 }
 
-export default function VetUnifiedForm({ recordId, petName, intakeData }: VetUnifiedFormProps) {
+export default function VetUnifiedForm({ recordId, petName, intakeData, medications = [] }: VetUnifiedFormProps) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -184,7 +186,22 @@ export default function VetUnifiedForm({ recordId, petName, intakeData }: VetUni
                                 {prescriptions.map((rx, idx) => (
                                     <div key={idx} className="flex gap-2 items-start border p-2 rounded bg-background">
                                         <div className="grid flex-1 gap-2">
-                                            <Input placeholder="Medication Name" value={rx.medicationName} onChange={(e) => updatePrescription(idx, 'medicationName', e.target.value)} className="h-8 text-sm" />
+                                            <div className="flex items-center justify-between gap-2">
+                                                <Input 
+                                                    list="medications-list" 
+                                                    placeholder="Medication Name (Select or Type)" 
+                                                    value={rx.medicationName} 
+                                                    onChange={(e) => updatePrescription(idx, 'medicationName', e.target.value)} 
+                                                    className="h-8 text-sm flex-1" 
+                                                />
+                                                {(() => {
+                                                    const med = medications.find(m => m.itemName?.toLowerCase() === rx.medicationName?.toLowerCase());
+                                                    if (med && med.stock <= 5) {
+                                                        return <Badge variant="destructive" className="shrink-0 text-[10px] h-6 py-0 flex items-center">Low on stocks ({med.stock})</Badge>;
+                                                    }
+                                                    return null;
+                                                })()}
+                                            </div>
                                             <div className="grid grid-cols-2 gap-2">
                                                 <Input placeholder="Dosage (e.g. 1 tab)" value={rx.dosage} onChange={(e) => updatePrescription(idx, 'dosage', e.target.value)} className="h-8 text-sm" />
                                                 <Input placeholder="Instructions (e.g. 2x a day)" value={rx.instructions} onChange={(e) => updatePrescription(idx, 'instructions', e.target.value)} className="h-8 text-sm" />
@@ -193,6 +210,11 @@ export default function VetUnifiedForm({ recordId, petName, intakeData }: VetUni
                                         <Button type="button" variant="ghost" size="sm" className="text-destructive h-8" onClick={() => removePrescription(idx)}>X</Button>
                                     </div>
                                 ))}
+                                <datalist id="medications-list">
+                                    {medications.map(med => (
+                                        <option key={med.id} value={med.itemName} />
+                                    ))}
+                                </datalist>
                             </div>
 
                             <div className="space-y-2">
